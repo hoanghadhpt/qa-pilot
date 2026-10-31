@@ -103,11 +103,34 @@ Serves `step-<n>-raw.png` or `step-<n>-annotated.png` from `tests/runs/<runId>/`
 
 ---
 
-## 4. Multimodal AI Spec Generator API (`/api/generator`)
+## 4. Multimodal AI Spec Generator & Live Exploration API (`/api/generator`)
+
+### `POST /api/generator/explore`
+Khám phá trang web thực tế qua kết nối CDP, trích xuất cấu trúc phần tử tương tác và tóm tắt Accessibility Tree phục vụ sinh kịch bản chính xác:
+- **Request Body**:
+  ```json
+  {
+    "url": "https://demo.automationtesting.in/Register.html",
+    "projectId": "default"
+  }
+  ```
+- **Response `200 OK`**:
+  ```json
+  {
+    "url": "https://demo.automationtesting.in/Register.html",
+    "title": "Register",
+    "elements": [
+      { "selector": "input[ng-model='FirstName']", "tag": "input", "role": "textbox", "label": "First Name" },
+      { "selector": "#submitbtn", "tag": "button", "role": "button", "label": "Submit" }
+    ],
+    "a11ySummary": "- Form: Register\n- Input 'First Name': input[ng-model='FirstName']\n- Button 'Submit': #submitbtn"
+  }
+  ```
 
 ### `POST /api/generator/generate`
 Accepts `multipart/form-data` with:
 - `acceptanceCriteria` (`string`, required): Text description / Acceptance Criteria
+- `targetUrl` (`string`, optional): Live URL of target page to explore or reference
 - `projectId` (`string`, default `"default"`)
 - `image` (`File`, optional): Uploaded Figma wireframe / UI screenshot saved temporarily to `tests/temp/`
 - **Response `200 OK`**:

@@ -141,6 +141,17 @@ description: "Task list for QA Pilot MVP (v0.0.1) implementation"
 
 ---
 
+## Phase 9: Live Page Exploration & Exact Selector Discovery (Explore Test)
+
+**Purpose**: Bổ sung cơ chế khám phá trang web trực tiếp qua CDP (`http://127.0.0.1:9222`) trước khi sinh kịch bản để tự động trích xuất các phần tử tương tác thực tế và ghép vào các bước test với selector chính xác 100%.
+
+- [X] T038 Xây dựng phương thức `explorePage(url: string)` trong `server/src/services/cliRunner.ts` trích xuất danh sách Interactive Elements (input, button, select, link) và a11y summary qua CDP session per `FR-011`
+- [X] T039 Xây dựng endpoint `POST /api/generator/explore` và cập nhật `POST /api/generator/generate` trong `server/src/routes/generator.ts` cùng prompt `server/src/prompts/generator.md` để nạp các selector thật vào AI generator
+- [X] T040 Cập nhật giao diện `client/src/components/GenerateSpecModal.tsx` thêm ô nhập Live URL, nút `Khám phá trang`, thẻ hiển thị các phần tử đã phát hiện và tự động điền URL vào kịch bản sinh ra
+- [X] T041 Kiểm thử thực tế tính năng Explore Test với `https://demo.automationtesting.in/Register.html` và một trang tin tức/biểu mẫu thực tế, xác thực các bước sinh ra có selector thật và chạy đạt (PASSED)
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build **QA Pilot (v0.0.1)** — a local-first automated testing dashboard and hybrid execution engine for QA engineers. The system pairs **Chrome DevTools Protocol (CDP)** (`http://127.0.0.1:9222` & `chrome-devtools-mcp`) for deterministic browser step execution, semantic Accessibility (a11y) Tree extraction, DOM bounding-box lookup, and console/network telemetry capture with **Local AI CLI subprocesses** (`claude` / `agy` / `gemini` in `-p` print mode) for Vietnamese Root Cause Analysis (RCA) and test generation from UI wireframes + Acceptance Criteria. The frontend uses **Ant Design (`antd` v5) + minimal CSS variables** (replacing Tailwind CSS) and strictly enforces minimalist copywriting (zero emojis, zero hyperbolic/marketing phrasing, context-aware form fields).
+Build **QA Pilot (v0.0.1)** — a local-first automated testing dashboard and hybrid execution engine for QA engineers. The system pairs **Chrome DevTools Protocol (CDP)** (`http://127.0.0.1:9222` & `chrome-devtools-mcp`) for deterministic browser step execution, live page exploration & selector discovery, semantic Accessibility (a11y) Tree extraction, DOM bounding-box lookup, and console/network telemetry capture with **Local AI CLI subprocesses** (`claude` / `agy` / `gemini` in `-p` print mode) for Vietnamese Root Cause Analysis (RCA) and test generation from Live Page Explorations + UI wireframes + Acceptance Criteria. The frontend uses **Ant Design (`antd` v5) + minimal CSS variables** (replacing Tailwind CSS) and strictly enforces minimalist copywriting (zero emojis, zero hyperbolic/marketing phrasing, context-aware form fields).
 
 ## Technical Context
 
@@ -142,3 +142,26 @@ qa-pilot/
 ## Complexity Tracking
 
 No Constitution violations exist. All 6 Core Principles pass without exception.
+
+---
+
+## Phase 9: Live Page Exploration & Exact Selector Discovery (Explore Test)
+
+### Objective
+Giải quyết khoảng trống lớn nhất giữa lý thuyết và thực tiễn: Khi tạo kịch bản mới, thay vì AI phải "đoán mò" selector từ tài liệu văn bản hoặc sinh fallback mặc định, hệ thống mở trang qua CDP (`http://127.0.0.1:9222`), thực hiện bước **Khám phá trang (Explore)** để đọc các phần tử tương tác thực tế (`buttons`, `inputs`, `forms`, `links`) và cây Accessibility Tree, từ đó sinh kịch bản với selector chính xác 100%.
+
+### Technical Design:
+1. **Backend (`server/src/routes/generator.ts` & `cliRunner.ts`)**:
+   - Thêm phương thức `explorePage(url: string)` trong `cliRunner`:
+     - Kết nối CDP, mở URL đích trên tab persistent.
+     - Chờ trang tải (`domcontentloaded` / `networkidle`).
+     - Trích xuất danh sách Interactive Elements: thẻ `<input>`, `<button>`, `<select>`, `<textarea>`, `<a>` kèm thuộc tính định danh (`id`, `name`, `ng-model`, `placeholder`, `aria-label`, text).
+     - Rút gọn cây Accessibility Tree (chỉ giữ lại các nút tương tác).
+   - Thêm endpoint `POST /api/generator/explore`: trả về danh sách elements và a11y summary.
+   - Cập nhật `POST /api/generator/generate`: nhận `targetUrl` và `discoveredElements`, chèn trực tiếp vào prompt `generator.md` để AI sinh ra các bước với selector thật.
+
+2. **Frontend (`client/src/components/GenerateSpecModal.tsx`)**:
+   - Thêm ô nhập: **Đường dẫn URL trang web (Live URL)** (ví dụ: `https://demo.automationtesting.in/Register.html` hoặc `https://vnexpress.net/`).
+   - Nút bấm: **Khám phá trang (Explore)**.
+   - Hiển thị danh sách tóm tắt các phần tử đã phát hiện (ví dụ: 12 ô nhập liệu, 3 nút bấm) trước khi bấm **Tạo danh sách đề xuất**.
+   - Giao diện Ant Design tối giản, phản hồi nhanh, không dùng emoji.

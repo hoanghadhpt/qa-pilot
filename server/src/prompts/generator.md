@@ -5,6 +5,7 @@ Quy tắc bắt buộc:
 1. Chỉ trả về đúng một mảng JSON chứa các đối tượng TestSpec hợp lệ, không kèm văn bản giải thích bên ngoài.
 2. Ngôn ngữ trong JSON: Tiếng Việt ngắn gọn, rõ ràng, không dùng biểu tượng emoji, không dùng từ ngữ cường điệu.
 3. Chỉ sử dụng các `action` hợp lệ: `"open"`, `"input"`, `"click"`, `"assert"`.
+4. Nếu có thông tin cấu trúc phần tử và cây ngữ nghĩa khám phá từ trang web thực tế, BẮT BUỘC sử dụng chính xác các bộ chọn (selectors) và URL thực tế đó. Mỗi bước nên có trường `expected` (bộ chọn hoặc URL kỳ vọng xuất hiện sau bước).
 
 Cấu trúc mảng JSON trả về:
 [

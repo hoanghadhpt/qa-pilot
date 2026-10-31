@@ -22,6 +22,22 @@ export interface CdpStatusInfo {
   headless: boolean;
 }
 
+export interface DiscoveredElement {
+  selector: string;
+  tag: string;
+  type?: string;
+  role?: string;
+  label: string;
+  suggestedAction: 'input' | 'click' | 'assert';
+}
+
+export interface PageExplorationResult {
+  url: string;
+  title: string;
+  elements: DiscoveredElement[];
+  a11ySummary: string;
+}
+
 export type RunnerEventCallback = (event: string, payload: unknown) => void;
 
 const CHROME_CANDIDATES = [
@@ -194,6 +210,178 @@ export class CliRunner {
 
   public stopActiveRun(): void {
     this.abortRequested = true;
+  }
+
+  public async explorePage(rawUrl: string): Promise<PageExplorationResult> {
+    const targetUrl = rawUrl.trim();
+    if (!targetUrl) {
+      throw new Error('URL khám phá không được để trống.');
+    }
+
+    const { page, cdpSession } = await this.getPersistentPage();
+
+    try {
+      await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    } catch {
+      await page.goto(targetUrl, { timeout: 15000 }).catch(() => {});
+    }
+
+    await page.waitForTimeout(800).catch(() => {});
+
+    const title = (await page.title().catch(() => '')) || '';
+    const currentUrl = page.url();
+
+    const elements = await page.evaluate(() => {
+      const results: Array<{
+        selector: string;
+        tag: string;
+        type?: string;
+        role?: string;
+        label: string;
+        suggestedAction: 'input' | 'click' | 'assert';
+      }> = [];
+      const seenSelectors = new Set<string>();
+
+      // 1. Inputs, Textareas, Selects
+      const inputs = document.querySelectorAll<HTMLElement>(
+        'input:not([type="hidden"]), textarea, select'
+      );
+      inputs.forEach((el) => {
+        if (results.length >= 30) return;
+        const tag = el.tagName.toLowerCase();
+        const type =
+          el.getAttribute('type') ||
+          (tag === 'textarea' ? 'textarea' : tag === 'select' ? 'select' : 'text');
+        const id = el.id ? `#${el.id}` : '';
+        const ngModel = el.getAttribute('ng-model');
+        const name = el.getAttribute('name');
+        const placeholder = el.getAttribute('placeholder');
+        const ariaLabel = el.getAttribute('aria-label');
+
+        let selector = '';
+        if (id && !/^\d/.test(el.id)) {
+          selector = id;
+        } else if (ngModel) {
+          selector = `${tag}[ng-model='${ngModel}']`;
+        } else if (name) {
+          selector = `${tag}[name='${name}']`;
+        } else if (placeholder) {
+          selector = `${tag}[placeholder='${placeholder}']`;
+        } else if (ariaLabel) {
+          selector = `${tag}[aria-label='${ariaLabel}']`;
+        } else {
+          const cls = (el.className || '')
+            .trim()
+            .split(/\s+/)
+            .filter((c) => c && !c.includes(':'))[0];
+          if (cls) selector = `${tag}.${cls}`;
+        }
+
+        if (!selector || seenSelectors.has(selector)) return;
+        seenSelectors.add(selector);
+
+        let label = placeholder || ariaLabel || '';
+        if (!label && el.id) {
+          const l = document.querySelector(`label[for="${el.id}"]`);
+          if (l) label = l.textContent?.trim() || '';
+        }
+        if (!label && el.closest('label')) {
+          label = el.closest('label')?.textContent?.trim() || '';
+        }
+        if (!label) label = name || ngModel || selector;
+
+        const isClickable =
+          type === 'submit' || type === 'button' || type === 'checkbox' || type === 'radio';
+        results.push({
+          selector,
+          tag,
+          type,
+          role: isClickable ? 'button' : 'textbox',
+          label: label.slice(0, 50),
+          suggestedAction: isClickable ? 'click' : 'input',
+        });
+      });
+
+      // 2. Buttons & Clickables
+      const buttons = document.querySelectorAll<HTMLElement>(
+        'button, [role="button"], input[type="submit"], input[type="button"]'
+      );
+      buttons.forEach((el) => {
+        if (results.length >= 45) return;
+        const tag = el.tagName.toLowerCase();
+        const id = el.id ? `#${el.id}` : '';
+        const text = (el.textContent || '').trim().replace(/\s+/g, ' ');
+        const ariaLabel = el.getAttribute('aria-label');
+
+        let selector = '';
+        if (id && !/^\d/.test(el.id)) {
+          selector = id;
+        } else if (text && text.length < 30) {
+          selector = `${tag}:has-text("${text}")`;
+        } else if (ariaLabel) {
+          selector = `${tag}[aria-label='${ariaLabel}']`;
+        }
+
+        if (!selector || seenSelectors.has(selector)) return;
+        seenSelectors.add(selector);
+
+        results.push({
+          selector,
+          tag,
+          role: 'button',
+          label: (text || ariaLabel || selector).slice(0, 50),
+          suggestedAction: 'click',
+        });
+      });
+
+      // 3. Significant Links
+      const links = document.querySelectorAll<HTMLAnchorElement>('a[href]');
+      links.forEach((a) => {
+        if (results.length >= 55) return;
+        const text = (a.textContent || '').trim().replace(/\s+/g, ' ');
+        const href = a.getAttribute('href') || '';
+        if (text && text.length > 2 && text.length < 40) {
+          let selector = '';
+          if (a.id) selector = `#${a.id}`;
+          else selector = `a:has-text("${text}")`;
+
+          if (seenSelectors.has(selector)) return;
+          seenSelectors.add(selector);
+
+          results.push({
+            selector,
+            tag: 'a',
+            role: 'link',
+            label: `${text} (${href.slice(0, 30)})`.slice(0, 50),
+            suggestedAction: 'click',
+          });
+        }
+      });
+
+      return results;
+    });
+
+    const a11yNodes = await this.extractCompactA11yTree(cdpSession);
+    const summaryLines = [
+      `- Tiêu đề trang: "${title}"`,
+      `- URL hiện tại: ${currentUrl}`,
+      `- Phần tử tương tác chính (${elements.length}):`,
+      ...elements.slice(0, 25).map((e) => `  * [${e.suggestedAction}] ${e.selector} (${e.label})`),
+    ];
+
+    if (a11yNodes.length > 0) {
+      summaryLines.push(
+        `- Cây ngữ nghĩa a11y (${a11yNodes.length} nút):`,
+        ...a11yNodes.slice(0, 20).map((n) => `  * ${n.role}: "${n.name}"`)
+      );
+    }
+
+    return {
+      url: currentUrl,
+      title,
+      elements,
+      a11ySummary: summaryLines.join('\n'),
+    };
   }
 
   public async executeSpec(

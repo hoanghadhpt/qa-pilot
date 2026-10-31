@@ -16,15 +16,54 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
   onClose,
   onSavedSpecs,
 }) => {
+  const [targetUrl, setTargetUrl] = useState('');
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [isExploring, setIsExploring] = useState(false);
+  const [explorationResult, setExplorationResult] = useState<{
+    url: string;
+    title: string;
+    elements: Array<{ selector: string; label: string; suggestedAction: string }>;
+    a11ySummary: string;
+  } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedSpecs, setGeneratedSpecs] = useState<TestSpec[]>([]);
 
+  const handleExplore = async () => {
+    if (!targetUrl.trim()) {
+      message.warning('Vui lòng nhập địa chỉ URL cần khám phá.');
+      return;
+    }
+
+    setIsExploring(true);
+    try {
+      const res = await fetch('/api/generator/explore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: targetUrl.trim(), projectId }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Không thể khám phá trang web qua CDP.');
+      }
+
+      const data = await res.json();
+      setExplorationResult(data);
+      message.success(
+        `Đã khám phá trang: phát hiện ${data.elements?.length || 0} phần tử tương tác.`
+      );
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Lỗi khi kết nối CDP khám phá trang.');
+    } finally {
+      setIsExploring(false);
+    }
+  };
+
   const handleGenerate = async () => {
-    if (!acceptanceCriteria.trim()) {
-      message.warning('Vui lòng nhập tiêu chí nghiệm thu.');
+    if (!acceptanceCriteria.trim() && !targetUrl.trim()) {
+      message.warning('Vui lòng nhập tiêu chí nghiệm thu hoặc URL trang web.');
       return;
     }
 
@@ -33,6 +72,10 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
       const formData = new FormData();
       formData.append('projectId', projectId);
       formData.append('acceptanceCriteria', acceptanceCriteria);
+      formData.append('targetUrl', targetUrl.trim());
+      if (explorationResult?.a11ySummary) {
+        formData.append('discoveredSummary', explorationResult.a11ySummary);
+      }
       if (fileList[0]?.originFileObj) {
         formData.append('image', fileList[0].originFileObj);
       }
@@ -75,6 +118,8 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
       onSavedSpecs(savedList);
       setGeneratedSpecs([]);
       setAcceptanceCriteria('');
+      setTargetUrl('');
+      setExplorationResult(null);
       setFileList([]);
       onClose();
     } catch {
@@ -86,10 +131,10 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
 
   return (
     <Modal
-      title="Tạo kịch bản từ tài liệu & ảnh thiết kế"
+      title="Tạo kịch bản kiểm thử"
       open={open}
       onCancel={onClose}
-      width={680}
+      width={720}
       footer={
         <Space>
           <Button onClick={onClose}>Đóng</Button>
@@ -110,13 +155,70 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <div>
           <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
+            Khám phá trang web thực tế qua CDP (Explore Live Page)
+          </Typography.Text>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Input
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="https://demo.automationtesting.in/Register.html hoặc URL cần kiểm thử"
+              style={{ fontFamily: 'monospace' }}
+            />
+            <Button loading={isExploring} onClick={handleExplore}>
+              Khám phá trang
+            </Button>
+          </div>
+
+          {explorationResult && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: '8px 12px',
+                background: 'var(--surface-color)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 4,
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 6,
+                }}
+              >
+                <Typography.Text strong style={{ fontSize: 12 }}>
+                  Tiêu đề: {explorationResult.title || '(Không có tiêu đề)'}
+                </Typography.Text>
+                <Tag color="processing">
+                  {explorationResult.elements.length} phần tử tương tác
+                </Tag>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 110, overflowY: 'auto' }}>
+                {explorationResult.elements.slice(0, 16).map((el, idx) => (
+                  <Tag key={idx} style={{ fontSize: 11, fontFamily: 'monospace', margin: 0 }}>
+                    {el.selector}
+                  </Tag>
+                ))}
+                {explorationResult.elements.length > 16 && (
+                  <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+                    +{explorationResult.elements.length - 16} phần tử khác
+                  </Typography.Text>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div>
+          <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
             Tiêu chí nghiệm thu (Acceptance Criteria)
           </Typography.Text>
           <Input.TextArea
-            rows={4}
+            rows={3}
             value={acceptanceCriteria}
             onChange={(e) => setAcceptanceCriteria(e.target.value)}
-            placeholder="Nhập mô tả yêu cầu hoặc tiêu chí nghiệm thu cho tính năng..."
+            placeholder="Nhập mô tả yêu cầu hoặc các bước nghiệp vụ cần kiểm thử..."
           />
         </div>
 
