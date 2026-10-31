@@ -1,0 +1,7 @@
+name: "staging"
+is_production: false
+base_url: "https://demo.automationtesting.in"
+allowed_domains:
+  - "demo.automationtesting.in"
+variables:
+  DEFAULT_TIMEOUT: "10000"

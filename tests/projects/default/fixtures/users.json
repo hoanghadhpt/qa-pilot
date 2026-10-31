@@ -1,0 +1,9 @@
+{
+  "standard": {
+    "firstName": "Nguyen",
+    "lastName": "Van Tester",
+    "email": "tester.qapilot@example.com",
+    "phone": "0987654321",
+    "address": "Ha Noi, Viet Nam"
+  }
+}

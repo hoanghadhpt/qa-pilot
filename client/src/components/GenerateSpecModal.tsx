@@ -1,0 +1,176 @@
+import React, { useState } from 'react';
+import { Button, Input, Modal, Space, Tag, Typography, Upload, message } from 'antd';
+import type { UploadFile } from 'antd/es/upload/interface';
+import { TestSpec } from '../types';
+
+interface GenerateSpecModalProps {
+  open: boolean;
+  projectId: string;
+  onClose: () => void;
+  onSavedSpecs: (specs: TestSpec[]) => void;
+}
+
+export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
+  open,
+  projectId,
+  onClose,
+  onSavedSpecs,
+}) => {
+  const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [generatedSpecs, setGeneratedSpecs] = useState<TestSpec[]>([]);
+
+  const handleGenerate = async () => {
+    if (!acceptanceCriteria.trim()) {
+      message.warning('Vui lòng nhập tiêu chí nghiệm thu.');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const formData = new FormData();
+      formData.append('projectId', projectId);
+      formData.append('acceptanceCriteria', acceptanceCriteria);
+      if (fileList[0]?.originFileObj) {
+        formData.append('image', fileList[0].originFileObj);
+      }
+
+      const res = await fetch('/api/generator/generate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error('Không thể tạo kịch bản.');
+      }
+
+      const data = await res.json();
+      setGeneratedSpecs(data.generatedSpecs || []);
+    } catch (err) {
+      message.error(err instanceof Error ? err.message : 'Lỗi khi tạo kịch bản.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSaveAll = async () => {
+    if (generatedSpecs.length === 0) return;
+    setIsSaving(true);
+    try {
+      const savedList: TestSpec[] = [];
+      for (const spec of generatedSpecs) {
+        const res = await fetch('/api/specs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId, spec }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          savedList.push(data.spec);
+        }
+      }
+      message.success(`Đã lưu ${savedList.length} kịch bản vào dự án.`);
+      onSavedSpecs(savedList);
+      setGeneratedSpecs([]);
+      setAcceptanceCriteria('');
+      setFileList([]);
+      onClose();
+    } catch {
+      message.error('Lỗi khi lưu kịch bản mới.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Modal
+      title="Tạo kịch bản từ tài liệu & ảnh thiết kế"
+      open={open}
+      onCancel={onClose}
+      width={680}
+      footer={
+        <Space>
+          <Button onClick={onClose}>Đóng</Button>
+          <Button loading={isGenerating} onClick={handleGenerate}>
+            Tạo danh sách đề xuất
+          </Button>
+          <Button
+            type="primary"
+            disabled={generatedSpecs.length === 0}
+            loading={isSaving}
+            onClick={handleSaveAll}
+          >
+            Lưu vào dự án ({generatedSpecs.length})
+          </Button>
+        </Space>
+      }
+    >
+      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+        <div>
+          <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
+            Tiêu chí nghiệm thu (Acceptance Criteria)
+          </Typography.Text>
+          <Input.TextArea
+            rows={4}
+            value={acceptanceCriteria}
+            onChange={(e) => setAcceptanceCriteria(e.target.value)}
+            placeholder="Nhập mô tả yêu cầu hoặc tiêu chí nghiệm thu cho tính năng..."
+          />
+        </div>
+
+        <div>
+          <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
+            Ảnh chụp thiết kế giao diện (không bắt buộc)
+          </Typography.Text>
+          <Upload.Dragger
+            multiple={false}
+            maxCount={1}
+            fileList={fileList}
+            beforeUpload={(file) => {
+              setFileList([file]);
+              return false;
+            }}
+            onRemove={() => setFileList([])}
+          >
+            <Typography.Text style={{ fontSize: 13 }}>
+              Kéo thả tệp ảnh thiết kế vào đây hoặc bấm để chọn tệp
+            </Typography.Text>
+          </Upload.Dragger>
+        </div>
+
+        {generatedSpecs.length > 0 && (
+          <div>
+            <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
+              Kịch bản đề xuất ({generatedSpecs.length})
+            </Typography.Text>
+            <Space direction="vertical" size="small" style={{ width: '100%' }}>
+              {generatedSpecs.map((spec) => (
+                <div
+                  key={spec.id}
+                  style={{
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 6,
+                    padding: 10,
+                  }}
+                >
+                  <Space size="small" style={{ marginBottom: 4 }}>
+                    <Tag style={{ margin: 0 }}>{spec.id}</Tag>
+                    <Typography.Text strong style={{ fontSize: 13 }}>
+                      {spec.title}
+                    </Typography.Text>
+                  </Space>
+                  <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
+                    Số bước: {spec.steps.length} | Nhãn: {spec.tags.join(', ')}
+                  </Typography.Text>
+                </div>
+              ))}
+            </Space>
+          </div>
+        )}
+      </Space>
+    </Modal>
+  );
+};
+

@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+
+# Test Artifacts and Temporary Uploads (NEVER COMMIT)
+tests/runs/
+tests/temp/
+*.png
+*.har
+
+# Local Secrets
+**/.env.local
+.env
+

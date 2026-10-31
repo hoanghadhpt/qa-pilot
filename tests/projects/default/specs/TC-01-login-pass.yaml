@@ -1,0 +1,93 @@
+id: TC-01
+title: Điền và gửi biểu mẫu đăng ký thành viên hợp lệffff
+description: Xác thực luồng nhập thông tin đăng ký trên demo.automationtesting.in/Register.html thành công
+tags:
+  - smoke
+  - read-only
+environments:
+  allowed:
+    - local
+    - staging
+    - production
+  blocked: []
+steps:
+  - id: step-1
+    action: open
+    target: ${env.BASE_URL}/Register.html
+    expected: Register.html
+    description: Mở trang biểu mẫu Đăng ký thành viên
+    optional: false
+  - id: step-2
+    action: input
+    target: input[ng-model='FirstName']
+    value: ${fixture.users.standard.firstName}
+    description: Nhập tên
+    optional: false
+  - id: step-3
+    action: input
+    target: input[ng-model='LastName']
+    value: ${fixture.users.standard.lastName}
+    description: Nhập họ
+    optional: false
+  - id: step-4
+    action: input
+    target: textarea[ng-model='Adress']
+    value: ${fixture.users.standard.address}
+    description: Nhập địa chỉ cư trú
+    optional: false
+  - id: step-5
+    action: input
+    target: input[ng-model='EmailAdress']
+    value: ${fixture.users.standard.email}
+    description: Nhập địa chỉ email
+    optional: false
+  - id: step-6
+    action: input
+    target: input[ng-model='Phone']
+    value: ${fixture.users.standard.phone}
+    description: Nhập số điện thoại
+    optional: false
+  - id: step-7
+    action: click
+    target: input[value='Male']
+    description: Chọn giới tính Nam
+    optional: false
+  - id: step-8
+    action: click
+    target: "#checkbox1"
+    description: Chọn sở thích Thể thao
+    optional: false
+  - id: step-9
+    action: input
+    target: input[name='optional_referral_code']
+    value: QA-PILOT-REF
+    description: Nhập mã giới thiệu không bắt buộc
+    optional: true
+    timeout_ms: 1500
+  - id: step-10
+    action: input
+    target: "#firstpassword"
+    value: ${secret.STANDARD_PASSWORD}
+    description: Nhập mật khẩu tài khoản
+    optional: false
+    sensitive: true
+  - id: step-11
+    action: input
+    target: "#secondpassword"
+    value: ${secret.STANDARD_PASSWORD}
+    description: Xác nhận lại mật khẩu tài khoản
+    optional: false
+    sensitive: true
+  - id: step-12
+    action: click
+    target: "#submitbtn"
+    expected: "#basicBootstrapForm"
+    description: Bấm nút gửi biểu mẫu đăng ký
+    optional: false
+assertions:
+  - type: element_visible
+    target: "#basicBootstrapForm"
+    severity: error
+  - type: url_contains
+    target: Register.html
+    severity: error

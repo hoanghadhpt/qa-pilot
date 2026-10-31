@@ -1,0 +1,34 @@
+id: "TC-02"
+title: "Báo lỗi và gợi ý bộ chọn khi không tìm thấy nút xác nhận"
+description: "Kiểm tra cơ chế CDP khoanh vùng lỗi và gợi ý bộ chọn thay thế khi nút #btn-register-submit không tồn tại trên trang Register.html"
+tags:
+  - "regression"
+  - "financial"
+environments:
+  allowed:
+    - "local"
+    - "staging"
+  blocked:
+    - "production"
+steps:
+  - id: "step-1"
+    action: "open"
+    target: "${env.BASE_URL}/Register.html"
+    description: "Mở trang biểu mẫu Đăng ký thành viên"
+    optional: false
+  - id: "step-2"
+    action: "input"
+    target: "input[ng-model='FirstName']"
+    value: "${fixture.users.standard.firstName}"
+    description: "Nhập tên người dùng"
+    optional: false
+  - id: "step-3"
+    action: "click"
+    target: "#btn-register-submit"
+    description: "Bấm nút xác nhận gửi (#btn-register-submit không tồn tại, nút thực tế trên trang là #submitbtn)"
+    optional: false
+    timeout_ms: 2500
+assertions:
+  - type: "element_visible"
+    target: "#basicBootstrapForm"
+    severity: "error"
