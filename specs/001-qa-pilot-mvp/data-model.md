@@ -26,9 +26,10 @@ All persistence in **QA Pilot** is file-based (`tests/projects/<project>/` and `
 | Field | Type | Required | Validation / Constraints |
 |-------|------|----------|--------------------------|
 | `id` | `string` | Yes | Unique within spec (e.g., `"step-1"`) |
-| `action` | `'open' \| 'input' \| 'click' \| 'assert'` | Yes | Supported CDP step action |
-| `target` | `string` | Yes | URL (for `open`) or CSS/text/role selector |
+| `action` | `'open' \| 'input' \| 'click' \| 'scroll' \| 'wait' \| 'assert'` | Yes | Supported CDP step action |
+| `target` | `string` | Yes | URL (for `open`), `'bottom'`/`'top'`/selector (for `scroll`), duration/selector (for `wait`), or CSS/text/role selector |
 | `value` | `string` | No | Input payload; supports `${env.X}`, `${secret.X}`, `${fixture.X}`, `${faker.X}` |
+| `expected` | `string` | No | Post-step expectation (selector, URL fragment, or visible text) |
 | `description` | `string` | Yes | Human-readable step label |
 | `optional` | `boolean` | Yes | Default `false`. If `true`, failure logs warning without aborting run |
 | `sensitive` | `boolean` | No | Default `false`. If `true`, `value` is masked in UI and redacted in logs |
@@ -117,4 +118,33 @@ All persistence in **QA Pilot** is file-based (`tests/projects/<project>/` and `
 |--------|--------|-------------|
 | `GitStatus` | `branch: string`, `ahead: number`, `behind: number`, `modified: string[]`, `hasConflicts: boolean` | Current repository sync state |
 | `SpecConflict` | `specPath: string`, `testId: string`, `localSteps: TestStep[]`, `remoteSteps: TestStep[]`, `stepDiffs: Array<{ index: number, local?: TestStep, remote?: TestStep, hasConflict: boolean }>` | Step-by-step conflict structure for `ConflictModal.tsx` |
+
+---
+
+## 5. Multi-Screen Exploration Trace (`ExplorationScreenTrace`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `screenIndex` | `number` | 1-based screen/stage index in the exploration loop |
+| `url` | `string` | Live URL at this screen stage |
+| `title` | `string` | Page title at this screen stage |
+| `actionExecuted` | `string` | Description of the navigation/scroll/click action performed to reach or inspect this screen |
+| `elements` | `DiscoveredElement[]` | Interactive elements discovered on this screen |
+| `matchedTexts` | `Array<{ selector: string, text: string }>` | Text blocks/elements matching keywords from the user's natural language prompt |
+
+---
+
+## 6. Local AI CLI Agent Info (`AiAgentInfo`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | `string` | Unique identifier (`'agy' \| 'claude' \| 'gemini' \| 'opencode' \| 'qwen' \| 'codex' \| 'aider' \| 'ollama' \| 'goose' \| 'copilot'`) |
+| `name` | `string` | Display name of the AI Agent CLI |
+| `command` | `string` | Executable CLI command name |
+| `installed` | `boolean` | `true` if the binary is installed and executable on the host machine; `false` disables the option in UI |
+| `binaryPath` | `string \| null` | Resolved path to the executable binary on disk (if installed) |
+| `version` | `string \| null` | Detected CLI version string |
+| `model` | `string` | Active or configured model name for this agent (e.g., `gemini-2.5-pro`, `claude-sonnet-4-6`, `nemotron-3-ultra-free`, `qwen3-coder-plus`) |
+| `active` | `boolean` | Whether this agent is currently selected as the primary AI agent in QA Pilot |
+
 

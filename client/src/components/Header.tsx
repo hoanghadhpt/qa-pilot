@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Select, Space, Tag, Typography, Switch } from 'antd';
-import { CdpStatus, EnvironmentConfig, GitStatus } from '../types';
+import { AiAgentInfo, CdpStatus, EnvironmentConfig, GitStatus } from '../types';
 
 interface HeaderProps {
   projectId: string;
@@ -13,6 +13,9 @@ interface HeaderProps {
   onSyncGit: () => void;
   cdpStatus: CdpStatus;
   onLaunchCdp: (headless: boolean) => void;
+  aiAgents: AiAgentInfo[];
+  activeAgentId: string;
+  onSelectAiAgent: (agentId: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -26,6 +29,9 @@ export const Header: React.FC<HeaderProps> = ({
   onSyncGit,
   cdpStatus,
   onLaunchCdp,
+  aiAgents,
+  activeAgentId,
+  onSelectAiAgent,
 }) => {
   const currentEnvConfig = environments.find((e) => e.name === environment);
   const isProduction = Boolean(currentEnvConfig?.is_production || environment === 'production');
@@ -74,6 +80,27 @@ export const Header: React.FC<HeaderProps> = ({
       </Space>
 
       <Space size="middle">
+        <Space size="small">
+          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+            AI Agent:
+          </Typography.Text>
+          <Select
+            size="small"
+            value={activeAgentId || undefined}
+            placeholder="Chọn AI Agent"
+            onChange={onSelectAiAgent}
+            style={{ width: 245 }}
+            popupMatchSelectWidth={310}
+            options={aiAgents.map((agent) => ({
+              value: agent.id,
+              disabled: !agent.installed,
+              label: agent.installed
+                ? `${agent.name} · ${agent.model}`
+                : `${agent.name} (Chưa cài đặt)`,
+            }))}
+          />
+        </Space>
+
         <Space size="small">
           <Tag color={cdpStatus.connected ? 'success' : 'default'} style={{ margin: 0 }}>
             {cdpStatus.connected ? 'CDP: Đã kết nối (9222)' : 'CDP: Chưa kết nối'}

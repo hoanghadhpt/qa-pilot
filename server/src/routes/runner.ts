@@ -10,6 +10,27 @@ router.get('/cdp-status', async (_req, res) => {
   res.json(status);
 });
 
+router.get('/ai-agents', (_req, res) => {
+  const data = cliRunner.getAiAgents();
+  res.json(data);
+});
+
+router.post('/ai-agents/select', (req, res) => {
+  const agentId = String(req.body?.agentId || '').trim();
+  if (!agentId) {
+    res.status(400).json({ error: 'Vui lòng cung cấp mã AI Agent cần chọn.' });
+    return;
+  }
+  try {
+    const data = cliRunner.selectAiAgent(agentId);
+    res.json(data);
+  } catch (err) {
+    res.status(400).json({
+      error: err instanceof Error ? err.message : 'Không thể chuyển đổi AI Agent.',
+    });
+  }
+});
+
 router.post('/cdp-launch', async (req, res) => {
   try {
     const headless = Boolean(req.body?.headless);

@@ -3,8 +3,9 @@ import path from 'path';
 import { Router } from 'express';
 import multer from 'multer';
 import { config } from '../config/env';
-import { cliRunner } from '../services/cliRunner';
-import { specAdapter, TestSpec } from '../services/specAdapter';
+import { cliRunner, MultiStageExplorationResult } from '../services/cliRunner';
+import { environmentManager } from '../services/environmentManager';
+import { specAdapter, TestAssertion, TestSpec } from '../services/specAdapter';
 
 const router = Router();
 
@@ -20,6 +21,163 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ storage });
+
+function synthesizeSpecsFromExploration(
+  prompt: string,
+  happyId: string,
+  negativeId: string,
+  exploration: MultiStageExplorationResult
+): TestSpec[] {
+  const shortTitle = prompt
+    .replace(/https?:\/\/[^\s]+/g, (u) => {
+      try {
+        return new URL(u).hostname;
+      } catch {
+        return u;
+      }
+    })
+    .split('\n')[0]
+    .trim()
+    .slice(0, 75);
+
+  const pageUrl = exploration.primaryUrl || '${env.BASE_URL}';
+  const isFormIntent = /nhập|điền|form|biểu mẫu|đăng ký|đăng nhập|register|login|submit/i.test(
+    prompt
+  );
+
+  let urlHostOrPath = '';
+  try {
+    const parsedUrl = new URL(pageUrl);
+    urlHostOrPath =
+      parsedUrl.pathname && parsedUrl.pathname !== '/'
+        ? parsedUrl.pathname
+        : parsedUrl.hostname;
+  } catch {
+    urlHostOrPath = '';
+  }
+
+  const finalScreen =
+    exploration.traces[exploration.traces.length - 1] || exploration.traces[0] || null;
+
+  // Use chronological steps & assertions synthesized directly by the Sequential Multi-Step Clause Engine
+  let steps: TestSpec['steps'] =
+    exploration.synthesizedSteps && exploration.synthesizedSteps.length > 0
+      ? [...exploration.synthesizedSteps]
+      : [];
+  let assertions: TestAssertion[] =
+    exploration.synthesizedAssertions && exploration.synthesizedAssertions.length > 0
+      ? [...exploration.synthesizedAssertions]
+      : [];
+
+  if (steps.length === 0) {
+    let stepCounter = 1;
+    steps.push({
+      id: `step-${stepCounter++}`,
+      action: 'open',
+      target: pageUrl,
+      ...(urlHostOrPath ? { expected: urlHostOrPath } : {}),
+      description: `Mở trang ${pageUrl}`,
+      optional: false,
+    });
+
+    if (exploration.needsScroll) {
+      const hasFooter = finalScreen?.matchedTexts.some((mt) => mt.selector === 'footer');
+      steps.push({
+        id: `step-${stepCounter++}`,
+        action: 'scroll',
+        target: 'bottom',
+        ...(hasFooter ? { expected: 'footer' } : {}),
+        description: 'Cuộn xuống cuối trang',
+        optional: false,
+      });
+    }
+
+    for (const kw of exploration.extractedKeywords) {
+      steps.push({
+        id: `step-${stepCounter++}`,
+        action: 'assert',
+        target: exploration.needsScroll ? 'footer' : 'body',
+        expected: kw,
+        description: `Kiểm chứng hiển thị nội dung '${kw}'`,
+        optional: false,
+      });
+    }
+  }
+
+  if (assertions.length === 0 && urlHostOrPath) {
+    assertions.push({
+      type: 'url_contains',
+      target: urlHostOrPath,
+      severity: 'error',
+    });
+  }
+
+  const specs: TestSpec[] = [
+    {
+      id: happyId,
+      title: shortTitle || `Kiểm thử luồng ${pageUrl}`,
+      description: prompt,
+      tags: isFormIntent ? ['smoke'] : ['smoke', 'read-only'],
+      environments: {
+        allowed: ['local', 'staging', 'production'],
+        blocked: [],
+      },
+      steps,
+      assertions,
+    },
+  ];
+
+  // Only add a Negative Case if the prompt is testing form submission / input validation
+  if (isFormIntent && finalScreen) {
+    const firstInput =
+      finalScreen.elements.find((e) => e.suggestedAction === 'input')?.selector || 'input';
+    const firstSubmit =
+      finalScreen.elements.find((e) => e.suggestedAction === 'click')?.selector || 'button';
+    specs.push({
+      id: negativeId,
+      title: `Kiểm tra xử lý dữ liệu không hợp lệ trên ${urlHostOrPath || 'biểu mẫu'}`,
+      description: `Kiểm tra thông báo lỗi khi nhập dữ liệu sai định dạng cho: ${shortTitle}`,
+      tags: ['regression', 'negative'],
+      environments: {
+        allowed: ['local', 'staging'],
+        blocked: ['production'],
+      },
+      steps: [
+        {
+          id: 'step-1',
+          action: 'open',
+          target: pageUrl,
+          description: `Mở trang ${pageUrl}`,
+          optional: false,
+        },
+        {
+          id: 'step-2',
+          action: 'input',
+          target: firstInput,
+          value: 'du-lieu-khong-hop-le',
+          description: 'Nhập dữ liệu sai định dạng',
+          optional: false,
+        },
+        {
+          id: 'step-3',
+          action: 'click',
+          target: firstSubmit,
+          description: 'Bấm gửi biểu mẫu',
+          optional: false,
+        },
+      ],
+      assertions: [
+        {
+          type: 'url_contains',
+          target: urlHostOrPath || pageUrl,
+          severity: 'error',
+        },
+      ],
+    });
+  }
+
+  return specs;
+}
 
 router.post('/explore', async (req, res) => {
   const rawUrl = String(req.body.url || '').trim();
@@ -40,13 +198,12 @@ router.post('/explore', async (req, res) => {
 
 router.post('/generate', upload.single('image'), async (req, res) => {
   const projectId = String(req.body.projectId || 'default');
+  const envName = String(req.body.environment || 'local');
   const acceptanceCriteria = String(req.body.acceptanceCriteria || '').trim();
-  const targetUrl = String(req.body.targetUrl || '').trim();
-  const discoveredSummary = String(req.body.discoveredSummary || '').trim();
   const uploadedFile = req.file;
 
-  if (!acceptanceCriteria && !targetUrl) {
-    res.status(400).json({ error: 'Vui lòng nhập tiêu chí nghiệm thu hoặc URL trang web.' });
+  if (!acceptanceCriteria) {
+    res.status(400).json({ error: 'Vui lòng nhập yêu cầu kiểm thử (Prompt).' });
     return;
   }
 
@@ -56,6 +213,14 @@ router.post('/generate', upload.single('image'), async (req, res) => {
     const happyId = `TC-0${nextIndex}`;
     const negativeId = `TC-0${nextIndex + 1}`;
 
+    const envs = environmentManager.listEnvironments(projectId);
+    const activeEnv = envs.find((e) => e.name === envName) || envs[0];
+    const defaultBaseUrl = activeEnv?.base_url || '';
+
+    // 1. Automatically execute Multi-Screen Iterative Exploration from the single user prompt
+    const exploration = await cliRunner.exploreMultiStageFlow(acceptanceCriteria, defaultBaseUrl);
+
+    // 2. Build prompt with real multi-screen CDP context for AI CLI
     const promptPath = path.join(config.promptsRoot, 'generator.md');
     const systemPrompt = fs.existsSync(promptPath)
       ? fs.readFileSync(promptPath, 'utf-8')
@@ -65,13 +230,12 @@ router.post('/generate', upload.single('image'), async (req, res) => {
       ? `\nĐường dẫn tệp ảnh giao diện đính kèm: ${uploadedFile.path}`
       : '';
 
-    const urlNote = targetUrl ? `\nURL trang web đích: ${targetUrl}` : '';
-    const exploreNote = discoveredSummary
-      ? `\n\nCấu trúc các phần tử thực tế và cây ngữ nghĩa khám phá từ trang web:\n${discoveredSummary}`
+    const exploreNote = exploration.combinedSummary
+      ? `\n\nDữ liệu thực tế thu thập qua các màn hình bằng CDP:\n${exploration.combinedSummary}`
       : '';
 
-    const fullPrompt = `${systemPrompt}\n\nMã bắt đầu: ${happyId}${urlNote}\nTiêu chí nghiệm thu:\n${acceptanceCriteria}${exploreNote}${imageNote}`;
-    const cliOut = await cliRunner.invokeLocalAiCli(fullPrompt, 14000);
+    const fullPrompt = `${systemPrompt}\n\nMã bắt đầu: ${happyId}\nYêu cầu của người dùng:\n${acceptanceCriteria}${exploreNote}${imageNote}`;
+    const cliOut = await cliRunner.invokeLocalAiCli(fullPrompt, 35000);
 
     let generatedSpecs: TestSpec[] | null = null;
     if (cliOut) {
@@ -84,161 +248,34 @@ router.post('/generate', upload.single('image'), async (req, res) => {
             generatedSpecs = parsed.map((item) => specAdapter.validateSpec(item));
           }
         } catch {
-          // fallback below
+          // fallback to deterministic synthesis from real exploration below
         }
       }
     }
 
+    // 3. Deterministic synthesis directly from multi-screen CDP exploration (never dummy Register.html)
     if (!generatedSpecs) {
-      const shortTitle = (acceptanceCriteria || targetUrl).split('\n')[0].slice(0, 60);
-      const pageUrl = targetUrl || '${env.BASE_URL}/Register.html';
-
-      // Parse discovered summary to extract real selectors if available
-      const discoveredSelectors: Array<{ selector: string; label: string; action: 'input' | 'click' }> = [];
-      if (discoveredSummary) {
-        const lines = discoveredSummary.split('\n');
-        for (const line of lines) {
-          const match = line.match(/\*\s+\[(input|click)\]\s+([^\s(]+)(?:\s+\((.*?)\))?/);
-          if (match) {
-            discoveredSelectors.push({
-              action: match[1] as 'input' | 'click',
-              selector: match[2],
-              label: match[3] || match[2],
-            });
-          }
-        }
-      }
-
-      // Generate realistic steps based on discovered elements
-      const happySteps: TestSpec['steps'] = [
-        {
-          id: 'step-1',
-          action: 'open',
-          target: pageUrl,
-          expected: pageUrl.includes('/') ? pageUrl.split('/').pop() || '' : '',
-          description: `Mở trang ${pageUrl}`,
-          optional: false,
-        },
-      ];
-
-      if (discoveredSelectors.length > 0) {
-        let stepIdx = 2;
-        for (const el of discoveredSelectors.slice(0, 5)) {
-          if (el.action === 'input') {
-            happySteps.push({
-              id: `step-${stepIdx++}`,
-              action: 'input',
-              target: el.selector,
-              value: '${fixture.users.standard.username}',
-              description: `Nhập giá trị cho ${el.label}`,
-              optional: false,
-            });
-          } else if (el.action === 'click') {
-            happySteps.push({
-              id: `step-${stepIdx++}`,
-              action: 'click',
-              target: el.selector,
-              description: `Bấm chọn ${el.label}`,
-              optional: false,
-            });
-          }
-        }
-      } else {
-        happySteps.push(
-          {
-            id: 'step-2',
-            action: 'input',
-            target: '#userName',
-            value: '${fixture.users.standard.username}',
-            description: 'Nhập họ tên hợp lệ',
-            optional: false,
-          },
-          {
-            id: 'step-3',
-            action: 'input',
-            target: '#userEmail',
-            value: '${fixture.users.standard.email}',
-            description: 'Nhập địa chỉ email hợp lệ',
-            optional: false,
-          },
-          {
-            id: 'step-4',
-            action: 'click',
-            target: '#submit',
-            description: 'Bấm nút gửi biểu mẫu',
-            optional: false,
-          }
-        );
-      }
-
-      const primaryAssertionTarget =
-        discoveredSelectors.find((s) => s.action === 'click')?.selector ||
-        (discoveredSelectors[0]?.selector ?? '#basicBootstrapForm');
-
-      generatedSpecs = [
-        {
-          id: happyId,
-          title: `Luồng hợp lệ: ${shortTitle}`,
-          description: acceptanceCriteria || `Kịch bản kiểm thử luồng hợp lệ cho ${pageUrl}`,
-          tags: ['smoke', 'read-only'],
-          environments: {
-            allowed: ['local', 'staging', 'production'],
-            blocked: [],
-          },
-          steps: happySteps,
-          assertions: [
-            {
-              type: 'element_visible',
-              target: primaryAssertionTarget,
-              severity: 'error',
-            },
-          ],
-        },
-        {
-          id: negativeId,
-          title: `Luồng ngoại lệ: Kiểm tra xử lý lỗi biểu mẫu`,
-          description: `Kiểm tra xử lý lỗi cho yêu cầu: ${shortTitle}`,
-          tags: ['regression', 'negative'],
-          environments: {
-            allowed: ['local', 'staging'],
-            blocked: ['production'],
-          },
-          steps: [
-            {
-              id: 'step-1',
-              action: 'open',
-              target: pageUrl,
-              description: `Mở trang ${pageUrl}`,
-              optional: false,
-            },
-            {
-              id: 'step-2',
-              action: 'input',
-              target: discoveredSelectors.find((s) => s.action === 'input')?.selector || '#userEmail',
-              value: 'du-lieu-sai-dinh-dang',
-              description: 'Nhập dữ liệu không hợp lệ để kiểm tra thông báo lỗi',
-              optional: false,
-            },
-            {
-              id: 'step-3',
-              action: 'click',
-              target: discoveredSelectors.find((s) => s.action === 'click')?.selector || '#submit',
-              description: 'Bấm nút gửi biểu mẫu',
-              optional: false,
-            },
-          ],
-          assertions: [
-            {
-              type: 'element_visible',
-              target: primaryAssertionTarget,
-              severity: 'error',
-            },
-          ],
-        },
-      ];
+      generatedSpecs = synthesizeSpecsFromExploration(
+        acceptanceCriteria,
+        happyId,
+        negativeId,
+        exploration
+      );
     }
 
-    res.json({ generatedSpecs });
+    const explorationTrace = exploration.traces.map((t) => ({
+      screenIndex: t.screenIndex,
+      url: t.url,
+      title: t.title,
+      actionExecuted: t.actionExecuted,
+      elementCount: t.elementCount,
+      matchedTexts: t.matchedTexts,
+    }));
+
+    res.json({
+      explorationTrace,
+      generatedSpecs,
+    });
   } finally {
     if (uploadedFile && fs.existsSync(uploadedFile.path)) {
       fs.unlink(uploadedFile.path, () => {});

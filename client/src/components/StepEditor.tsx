@@ -33,6 +33,8 @@ const ACTION_OPTIONS: Array<{ label: string; value: StepAction }> = [
   { label: 'Mở trang (open)', value: 'open' },
   { label: 'Nhập liệu (input)', value: 'input' },
   { label: 'Bấm chọn (click)', value: 'click' },
+  { label: 'Cuộn trang (scroll)', value: 'scroll' },
+  { label: 'Chờ (wait)', value: 'wait' },
   { label: 'Kiểm chứng (assert)', value: 'assert' },
 ];
 
@@ -310,12 +312,24 @@ export const StepEditor: React.FC<StepEditorProps> = ({
                 <div style={{ display: 'flex', gap: 6 }}>
                   <Input
                     size="small"
-                    addonBefore={step.action === 'open' ? 'URL đích' : 'Bộ chọn'}
+                    addonBefore={
+                      step.action === 'open'
+                        ? 'URL đích'
+                        : step.action === 'scroll'
+                        ? 'Vị trí cuộn'
+                        : step.action === 'wait'
+                        ? 'Điều kiện chờ'
+                        : 'Bộ chọn'
+                    }
                     value={step.target}
                     onChange={(e) => updateStep(idx, { target: e.target.value })}
                     placeholder={
                       step.action === 'open'
-                        ? '${env.BASE_URL}/text-box'
+                        ? '${env.BASE_URL}/Register.html'
+                        : step.action === 'scroll'
+                        ? 'bottom, top, hoặc bộ chọn phần tử (vd: footer)'
+                        : step.action === 'wait'
+                        ? 'Thời gian ms (vd: 1500) hoặc bộ chọn phần tử'
                         : '#userName hoặc button[type="submit"]'
                     }
                     style={{ fontFamily: 'monospace' }}

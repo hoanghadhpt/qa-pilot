@@ -66,6 +66,49 @@ Returns available environments (`local`, `staging`, `production`), their non-sec
 ### `GET /api/runner/cdp-status`
 Checks whether Chrome CDP is reachable on `http://127.0.0.1:9222/json/version` and returns browser version, active tab count, and current `headless` mode.
 
+### `GET /api/runner/ai-agents`
+Scans the local machine for the 10 supported AI CLI agents (`agy`, `claude`, `gemini`, `opencode`, `qwen`, `codex`, `aider`, `ollama`, `goose`, `copilot`), resolves their installation status, version, and active/configured model, and returns the currently selected `activeAgentId`.
+- **Response `200 OK`**:
+  ```json
+  {
+    "activeAgentId": "agy",
+    "agents": [
+      {
+        "id": "agy",
+        "name": "Antigravity CLI",
+        "command": "agy",
+        "installed": true,
+        "version": "2.0",
+        "model": "gemini-2.5-pro",
+        "active": true
+      },
+      {
+        "id": "claude",
+        "name": "Claude Code",
+        "command": "claude",
+        "installed": true,
+        "version": "2.1.241",
+        "model": "claude-sonnet-4-6",
+        "active": false
+      },
+      {
+        "id": "codex",
+        "name": "OpenAI Codex",
+        "command": "codex",
+        "installed": false,
+        "version": null,
+        "model": "gpt-5-codex",
+        "active": false
+      }
+    ]
+  }
+  ```
+
+### `POST /api/runner/ai-agents/select`
+Changes the active AI CLI agent used for Spec Generation and Failure RCA. Rejects selection if the target agent is not installed on the machine.
+- **Request Body**: `{ "agentId": "claude" }`
+- **Response `200 OK`**: `{ "activeAgentId": "claude", "agents": [ ... ] }`
+
 ### `POST /api/runner/cdp-launch`
 Auto-launches or restarts local Chrome with `--remote-debugging-port=9222` and `--user-data-dir=tests/temp/chrome-profile` in `headed` or `headless` mode.
 
@@ -128,21 +171,32 @@ Khám phá trang web thực tế qua kết nối CDP, trích xuất cấu trúc 
   ```
 
 ### `POST /api/generator/generate`
-Accepts `multipart/form-data` with:
-- `acceptanceCriteria` (`string`, required): Text description / Acceptance Criteria
-- `targetUrl` (`string`, optional): Live URL of target page to explore or reference
-- `projectId` (`string`, default `"default"`)
-- `image` (`File`, optional): Uploaded Figma wireframe / UI screenshot saved temporarily to `tests/temp/`
+Nhận yêu cầu tự nhiên từ một ô Prompt duy nhất, tự động bóc tách URL/từ khóa, thực thi **Vòng lặp Khám phá Đa màn hình (Multi-Screen Iterative Exploration)** qua CDP và sinh danh sách kịch bản kiểm thử:
+- Accepts `multipart/form-data` with:
+  - `acceptanceCriteria` (`string`, required): Câu prompt ngôn ngữ tự nhiên mô tả luồng kiểm thử (có thể chứa một hoặc nhiều URL, thao tác qua nhiều màn hình, cuộn trang, kiểm chứng nội dung)
+  - `projectId` (`string`, default `"default"`)
+  - `environment` (`string`, default `"local"`): Môi trường dùng để lấy `BASE_URL` mặc định nếu trong prompt không ghi rõ URL
+  - `image` (`File`, optional): Uploaded Figma wireframe / UI screenshot saved temporarily to `tests/temp/`
 - **Response `200 OK`**:
   ```json
   {
+    "explorationTrace": [
+      {
+        "screenIndex": 1,
+        "url": "https://vnexpress.net/",
+        "title": "Báo VnExpress",
+        "actionExecuted": "Mở trang và cuộn xuống cuối trang",
+        "elementCount": 55,
+        "matchedTexts": [{ "selector": "footer", "text": "Email: bandoc@vnexpress.net" }]
+      }
+    ],
     "generatedSpecs": [
       {
         "id": "TC-03",
-        "title": "Thanh toán thành công với thẻ hợp lệ (Happy Path)",
+        "title": "Kiểm tra thông tin email liên hệ ở footer trang VnExpress",
         "description": "...",
-        "tags": ["checkout", "happy-path"],
-        "environments": { "allowed": ["local", "staging"], "blocked": ["production"] },
+        "tags": ["smoke", "read-only"],
+        "environments": { "allowed": ["local", "staging", "production"], "blocked": [] },
         "steps": [ ... ],
         "assertions": [ ... ]
       }

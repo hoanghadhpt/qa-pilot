@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { CdpStatus, StepRunStatus, TestRunSummary } from '../types';
+import { AiAgentInfo, CdpStatus, StepRunStatus, TestRunSummary } from '../types';
 
 export interface LiveStepProgress {
   [stepId: string]: {
@@ -19,19 +19,58 @@ export function useTestRunner(onRunFinished?: (summary: TestRunSummary) => void)
     cdpUrl: 'http://127.0.0.1:9222',
     headless: false,
   });
+  const [aiAgents, setAiAgents] = useState<AiAgentInfo[]>([]);
+  const [activeAgentId, setActiveAgentId] = useState<string>('');
 
   const eventSourceRef = useRef<EventSource | null>(null);
 
   const refreshCdpStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/runner/cdp-status');
-      if (res.ok) {
-        const data = (await res.json()) as CdpStatus;
+      const [cdpRes, agentsRes] = await Promise.all([
+        fetch('/api/runner/cdp-status'),
+        fetch('/api/runner/ai-agents'),
+      ]);
+      if (cdpRes.ok) {
+        const data = (await cdpRes.json()) as CdpStatus;
         setCdpStatus(data);
+      }
+      if (agentsRes.ok) {
+        const agentData = (await agentsRes.json()) as {
+          activeAgentId: string;
+          agents: AiAgentInfo[];
+        };
+        if (Array.isArray(agentData.agents)) {
+          setAiAgents(agentData.agents);
+        }
+        if (agentData.activeAgentId) {
+          setActiveAgentId(agentData.activeAgentId);
+        }
       }
     } catch {
       // ignore network error
     }
+  }, []);
+
+  const selectAiAgent = useCallback(async (agentId: string) => {
+    try {
+      const res = await fetch('/api/runner/ai-agents/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId }),
+      });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          activeAgentId: string;
+          agents: AiAgentInfo[];
+        };
+        setAiAgents(data.agents || []);
+        setActiveAgentId(data.activeAgentId || agentId);
+        return data;
+      }
+    } catch {
+      // ignore
+    }
+    return null;
   }, []);
 
   const launchCdpBrowser = useCallback(async (headless: boolean) => {
@@ -166,6 +205,9 @@ export function useTestRunner(onRunFinished?: (summary: TestRunSummary) => void)
     latestSummary,
     setLatestSummary,
     cdpStatus,
+    aiAgents,
+    activeAgentId,
+    selectAiAgent,
     refreshCdpStatus,
     launchCdpBrowser,
     runTest,

@@ -1,4 +1,13 @@
-export type StepAction = 'open' | 'input' | 'click' | 'assert';
+export type StepAction = 'open' | 'input' | 'click' | 'scroll' | 'wait' | 'assert';
+
+export interface ExplorationScreenTrace {
+  screenIndex: number;
+  url: string;
+  title: string;
+  actionExecuted: string;
+  elementCount: number;
+  matchedTexts: Array<{ selector: string; text: string }>;
+}
 
 export interface TestStep {
   id: string;
@@ -145,4 +154,16 @@ export interface CdpStatus {
   cdpUrl: string;
   headless: boolean;
 }
+
+export interface AiAgentInfo {
+  id: string;
+  name: string;
+  command: string;
+  installed: boolean;
+  binaryPath: string | null;
+  version: string | null;
+  model: string;
+  active: boolean;
+}
+
 

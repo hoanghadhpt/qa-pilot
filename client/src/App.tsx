@@ -108,6 +108,9 @@ export const App: React.FC = () => {
     latestSummary,
     setLatestSummary,
     cdpStatus,
+    aiAgents,
+    activeAgentId,
+    selectAiAgent,
     refreshCdpStatus,
     launchCdpBrowser,
     runTest,
@@ -247,6 +250,11 @@ export const App: React.FC = () => {
           onSyncGit={handleSyncGit}
           cdpStatus={cdpStatus}
           onLaunchCdp={(headless) => launchCdpBrowser(headless)}
+          aiAgents={aiAgents}
+          activeAgentId={activeAgentId}
+          onSelectAiAgent={(agentId) => {
+            selectAiAgent(agentId);
+          }}
         />
 
         <div className="workspace-grid">

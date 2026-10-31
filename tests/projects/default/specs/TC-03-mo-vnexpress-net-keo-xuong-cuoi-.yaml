@@ -1,0 +1,52 @@
+id: TC-03
+title: Mở vnexpress.net Kéo xuống cuối màn hình và kiểm tra xem footer có thông ti
+description: "Mở https://vnexpress.net/, Kéo xuống cuối màn hình và kiểm tra xem footer có thông tin email sđt như sau không?\r\nĐường dây nóng: 083 888 0123\r\nEmail: bandoc@vnexpress.net\r\nSau đó click vào màn Chính sách bảo mật đảm bảo nội dung được load thành công, không lỗi"
+tags:
+  - smoke
+  - read-only
+environments:
+  allowed:
+    - local
+    - staging
+    - production
+  blocked: []
+steps:
+  - id: step-1
+    action: open
+    target: https://vnexpress.net/
+    expected: vnexpress.net
+    description: Mở trang https://vnexpress.net/
+    optional: false
+  - id: step-2
+    action: scroll
+    target: bottom
+    expected: footer
+    description: Cuộn xuống cuối màn hình
+    optional: false
+  - id: step-3
+    action: assert
+    target: footer
+    expected: "Đường dây nóng: 083 888 0123"
+    description: "Kiểm tra 'Đường dây nóng: 083 888 0123' hiển thị tại footer"
+    optional: false
+  - id: step-4
+    action: assert
+    target: footer
+    expected: "Email: bandoc@vnexpress.net"
+    description: "Kiểm tra 'Email: bandoc@vnexpress.net' hiển thị tại footer"
+    optional: false
+  - id: step-5
+    action: click
+    target: a:has-text("Chính sách bảo mật")
+    expected: /chinh-sach-bao-mat
+    description: Bấm vào 'Chính sách bảo mật'
+    optional: false
+  - id: step-6
+    action: assert
+    target: body
+    expected: Chính sách bảo mật dữ liệu cá nhân
+    description: Đảm bảo nội dung trang 'Chính sách bảo mật dữ liệu cá nhân' được tải thành công
+    optional: false
+assertions:
+  - type: no_console_errors
+    severity: warning

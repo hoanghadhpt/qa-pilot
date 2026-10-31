@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button, Input, Modal, Space, Tag, Typography, Upload, message } from 'antd';
 import type { UploadFile } from 'antd/es/upload/interface';
-import { TestSpec } from '../types';
+import { ExplorationScreenTrace, TestSpec } from '../types';
 
 interface GenerateSpecModalProps {
   open: boolean;
@@ -16,66 +16,27 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
   onClose,
   onSavedSpecs,
 }) => {
-  const [targetUrl, setTargetUrl] = useState('');
   const [acceptanceCriteria, setAcceptanceCriteria] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
-  const [isExploring, setIsExploring] = useState(false);
-  const [explorationResult, setExplorationResult] = useState<{
-    url: string;
-    title: string;
-    elements: Array<{ selector: string; label: string; suggestedAction: string }>;
-    a11ySummary: string;
-  } | null>(null);
+  const [explorationTrace, setExplorationTrace] = useState<ExplorationScreenTrace[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [generatedSpecs, setGeneratedSpecs] = useState<TestSpec[]>([]);
 
-  const handleExplore = async () => {
-    if (!targetUrl.trim()) {
-      message.warning('Vui lòng nhập địa chỉ URL cần khám phá.');
-      return;
-    }
-
-    setIsExploring(true);
-    try {
-      const res = await fetch('/api/generator/explore', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: targetUrl.trim(), projectId }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || 'Không thể khám phá trang web qua CDP.');
-      }
-
-      const data = await res.json();
-      setExplorationResult(data);
-      message.success(
-        `Đã khám phá trang: phát hiện ${data.elements?.length || 0} phần tử tương tác.`
-      );
-    } catch (err) {
-      message.error(err instanceof Error ? err.message : 'Lỗi khi kết nối CDP khám phá trang.');
-    } finally {
-      setIsExploring(false);
-    }
-  };
-
   const handleGenerate = async () => {
-    if (!acceptanceCriteria.trim() && !targetUrl.trim()) {
-      message.warning('Vui lòng nhập tiêu chí nghiệm thu hoặc URL trang web.');
+    if (!acceptanceCriteria.trim()) {
+      message.warning('Vui lòng nhập yêu cầu kiểm thử.');
       return;
     }
 
     setIsGenerating(true);
+    setExplorationTrace([]);
+    setGeneratedSpecs([]);
+
     try {
       const formData = new FormData();
       formData.append('projectId', projectId);
-      formData.append('acceptanceCriteria', acceptanceCriteria);
-      formData.append('targetUrl', targetUrl.trim());
-      if (explorationResult?.a11ySummary) {
-        formData.append('discoveredSummary', explorationResult.a11ySummary);
-      }
+      formData.append('acceptanceCriteria', acceptanceCriteria.trim());
       if (fileList[0]?.originFileObj) {
         formData.append('image', fileList[0].originFileObj);
       }
@@ -86,10 +47,12 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
       });
 
       if (!res.ok) {
-        throw new Error('Không thể tạo kịch bản.');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Không thể tạo kịch bản.');
       }
 
       const data = await res.json();
+      setExplorationTrace(data.explorationTrace || []);
       setGeneratedSpecs(data.generatedSpecs || []);
     } catch (err) {
       message.error(err instanceof Error ? err.message : 'Lỗi khi tạo kịch bản.');
@@ -117,9 +80,8 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
       message.success(`Đã lưu ${savedList.length} kịch bản vào dự án.`);
       onSavedSpecs(savedList);
       setGeneratedSpecs([]);
+      setExplorationTrace([]);
       setAcceptanceCriteria('');
-      setTargetUrl('');
-      setExplorationResult(null);
       setFileList([]);
       onClose();
     } catch {
@@ -139,7 +101,7 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
         <Space>
           <Button onClick={onClose}>Đóng</Button>
           <Button loading={isGenerating} onClick={handleGenerate}>
-            Tạo danh sách đề xuất
+            Phân tích & Tạo kịch bản
           </Button>
           <Button
             type="primary"
@@ -154,71 +116,17 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
     >
       <Space direction="vertical" size="middle" style={{ width: '100%' }}>
         <div>
-          <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
-            Khám phá trang web thực tế qua CDP (Explore Live Page)
+          <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 4 }}>
+            Mô tả yêu cầu kiểm thử (Prompt)
           </Typography.Text>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Input
-              value={targetUrl}
-              onChange={(e) => setTargetUrl(e.target.value)}
-              placeholder="https://demo.automationtesting.in/Register.html hoặc URL cần kiểm thử"
-              style={{ fontFamily: 'monospace' }}
-            />
-            <Button loading={isExploring} onClick={handleExplore}>
-              Khám phá trang
-            </Button>
-          </div>
-
-          {explorationResult && (
-            <div
-              style={{
-                marginTop: 8,
-                padding: '8px 12px',
-                background: 'var(--surface-color)',
-                border: '1px solid var(--border-color)',
-                borderRadius: 4,
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 6,
-                }}
-              >
-                <Typography.Text strong style={{ fontSize: 12 }}>
-                  Tiêu đề: {explorationResult.title || '(Không có tiêu đề)'}
-                </Typography.Text>
-                <Tag color="processing">
-                  {explorationResult.elements.length} phần tử tương tác
-                </Tag>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, maxHeight: 110, overflowY: 'auto' }}>
-                {explorationResult.elements.slice(0, 16).map((el, idx) => (
-                  <Tag key={idx} style={{ fontSize: 11, fontFamily: 'monospace', margin: 0 }}>
-                    {el.selector}
-                  </Tag>
-                ))}
-                {explorationResult.elements.length > 16 && (
-                  <Typography.Text type="secondary" style={{ fontSize: 11 }}>
-                    +{explorationResult.elements.length - 16} phần tử khác
-                  </Typography.Text>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div>
-          <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 6 }}>
-            Tiêu chí nghiệm thu (Acceptance Criteria)
+          <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 8 }}>
+            Nhập mô tả tự nhiên kèm đường dẫn URL (nếu có). Hệ thống sẽ tự động mở trình duyệt qua CDP, đi qua các màn hình, cuộn trang và trích xuất bộ chọn thực tế.
           </Typography.Text>
           <Input.TextArea
-            rows={3}
+            rows={4}
             value={acceptanceCriteria}
             onChange={(e) => setAcceptanceCriteria(e.target.value)}
-            placeholder="Nhập mô tả yêu cầu hoặc các bước nghiệp vụ cần kiểm thử..."
+            placeholder="Ví dụ: Truy cập https://vnexpress.net/ Cuộn xuống cuối cùng, đảm bảo hiển thị trường 'Email: bandoc@vnexpress.net' ở phần footer"
           />
         </div>
 
@@ -242,6 +150,69 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
           </Upload.Dragger>
         </div>
 
+        {isGenerating && (
+          <div
+            style={{
+              padding: '10px 12px',
+              background: 'var(--surface-color)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 4,
+            }}
+          >
+            <Typography.Text style={{ fontSize: 12 }}>
+              Đang tự động mở trình duyệt CDP, khám phá các màn hình và thiết kế các bước kiểm thử...
+            </Typography.Text>
+          </div>
+        )}
+
+        {explorationTrace.length > 0 && (
+          <div
+            style={{
+              padding: '10px 12px',
+              background: 'var(--surface-color)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 4,
+            }}
+          >
+            <Typography.Text strong style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
+              Nhật ký tự động khám phá trang ({explorationTrace.length} màn hình)
+            </Typography.Text>
+            <Space direction="vertical" size={6} style={{ width: '100%' }}>
+              {explorationTrace.map((trace) => (
+                <div
+                  key={trace.screenIndex}
+                  style={{
+                    fontSize: 12,
+                    padding: '6px 8px',
+                    background: '#fff',
+                    border: '1px solid var(--border-color)',
+                    borderRadius: 4,
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+                    <Typography.Text strong style={{ fontSize: 12 }}>
+                      Màn hình {trace.screenIndex}: {trace.title || trace.url}
+                    </Typography.Text>
+                    <Tag style={{ margin: 0, fontSize: 11 }}>{trace.elementCount} phần tử</Tag>
+                  </div>
+                  <Typography.Text type="secondary" style={{ fontSize: 11, display: 'block' }}>
+                    {trace.actionExecuted}
+                  </Typography.Text>
+                  {trace.matchedTexts && trace.matchedTexts.length > 0 && (
+                    <div style={{ marginTop: 4, display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                      {Array.from(new Set(trace.matchedTexts.map((mt) => mt.selector))).map((sel, idx) => (
+                        <Tag key={idx} color="processing" style={{ margin: 0, fontSize: 11, fontFamily: 'monospace' }}>
+                          {sel}
+                        </Tag>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </Space>
+          </div>
+        )}
+
         {generatedSpecs.length > 0 && (
           <div>
             <Typography.Text strong style={{ fontSize: 13, display: 'block', marginBottom: 8 }}>
@@ -263,9 +234,26 @@ export const GenerateSpecModal: React.FC<GenerateSpecModalProps> = ({
                       {spec.title}
                     </Typography.Text>
                   </Space>
-                  <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block' }}>
+                  <Typography.Text type="secondary" style={{ fontSize: 12, display: 'block', marginBottom: 6 }}>
                     Số bước: {spec.steps.length} | Nhãn: {spec.tags.join(', ')}
                   </Typography.Text>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {spec.steps.map((st, sIdx) => (
+                      <div
+                        key={st.id}
+                        style={{
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          padding: '3px 6px',
+                          background: 'var(--surface-color)',
+                          borderRadius: 3,
+                        }}
+                      >
+                        #{sIdx + 1} [{st.action}] {st.target}
+                        {st.expected ? ` -> kỳ vọng: ${st.expected}` : ''}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </Space>

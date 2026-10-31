@@ -5,7 +5,7 @@ import { config } from '../config/env';
 
 export interface TestStep {
   id: string;
-  action: 'open' | 'input' | 'click' | 'assert';
+  action: 'open' | 'input' | 'click' | 'scroll' | 'wait' | 'assert';
   target: string;
   value?: string;
   expected?: string;
@@ -74,7 +74,7 @@ export class SpecAdapter {
     const steps: TestStep[] = raw.steps.map((stepItem, idx) => {
       const s = stepItem as Record<string, unknown>;
       const action = String(s.action || 'click') as TestStep['action'];
-      if (!['open', 'input', 'click', 'assert'].includes(action)) {
+      if (!['open', 'input', 'click', 'scroll', 'wait', 'assert'].includes(action)) {
         throw new Error(`Bước ${idx + 1} trong ${raw.id} có hành động không hợp lệ: ${action}`);
       }
       return {

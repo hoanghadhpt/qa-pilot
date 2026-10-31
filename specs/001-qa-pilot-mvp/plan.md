@@ -165,3 +165,72 @@ Giải quyết khoảng trống lớn nhất giữa lý thuyết và thực ti�
    - Nút bấm: **Khám phá trang (Explore)**.
    - Hiển thị danh sách tóm tắt các phần tử đã phát hiện (ví dụ: 12 ô nhập liệu, 3 nút bấm) trước khi bấm **Tạo danh sách đề xuất**.
    - Giao diện Ant Design tối giản, phản hồi nhanh, không dùng emoji.
+
+---
+
+## Phase 10: One-Prompt Multi-Screen Autonomous Exploration & Spec Generation
+
+### Objective
+Tối ưu hóa toàn diện luồng tạo kịch bản theo triết lý **"1-Prompt Duy Nhất — Hệ thống Tự Động Hóa Toàn Bộ"**:
+1. Người dùng chỉ cần nhập một câu prompt tự nhiên duy nhất (không cần tách URL hay bấm khám phá thủ công).
+2. Hệ thống hỗ trợ các thao tác `scroll` (cuộn trang), `wait` (chờ tải trang/phần tử) và **Vòng lặp Khám phá Đa màn hình (Multi-Screen Iterative Exploration)** qua CDP.
+3. Giải quyết triệt để lỗi AI CLI timeout do xung đột `.mcp.json` và loại bỏ hoàn toàn kịch bản giả (`Register.html` dummy fallback).
+
+### Technical Design:
+1. **Mở rộng Tập lệnh Engine (`StepAction` trong `types/index.ts`, `specAdapter.ts`, `cliRunner.ts`, `StepEditor.tsx`)**:
+   - Thêm action `scroll`: hỗ trợ `target: "bottom"` (cuộn xuống cuối trang), `"top"` (cuộn lên đầu trang), hoặc bộ chọn CSS cụ thể (ví dụ: `"footer"`, `"#section-id"`).
+   - Thêm action `wait`: hỗ trợ chờ một khoảng thời gian (`value: "1000"`) hoặc chờ một phần tử/URL xuất hiện khi chuyển màn hình.
+
+2. **Vòng lặp Khám phá Đa màn hình (`exploreMultiStageFlow(prompt, baseUrl)` trong `cliRunner.ts`)**:
+   - **Tự động bóc tách URL & Từ khóa**: Trích xuất danh sách URL từ prompt (hoặc lấy `BASE_URL` của môi trường đang chọn nếu không có URL tuyệt đối) và các cụm từ khóa quan trọng (nội dung trong dấu nháy, email, tên nút/menu, chuyên mục).
+   - **Khám phá Chặng 1 (Màn hình khởi đầu)**:
+     - Mở URL trên CDP, tự động cuộn trang từ trên xuống dưới để kích hoạt toàn bộ phần tử lazy-load (như `footer`), sau đó thu thập:
+       - Danh sách Interactive Elements (`input`, `button`, `select`, `a`).
+       - Danh sách `matchedTexts`: các phần tử DOM chứa văn bản khớp với từ khóa trong prompt (kèm bộ chọn chính xác như `footer`, `p:has-text("...")`).
+   - **Khám phá Chặng 2..N (Chuyển tiếp Đa màn hình / Đa bước)**:
+     - Phân tích xem prompt có yêu cầu chuyển tiếp qua màn hình khác không (ví dụ: bấm vào một chuyên mục/menu/nút bấm hoặc nhập tìm kiếm rồi chuyển trang).
+     - Tự động thực thi thao tác chuyển màn hình ngay trên trình duyệt CDP (ví dụ: click vào link/button khớp với từ khóa bước trung gian trong prompt hoặc mở URL thứ 2), đợi màn hình mới tải xong rồi quét tiếp cấu trúc DOM/A11y của màn hình mới.
+     - Ghi nhận toàn bộ chuỗi `ExplorationScreenTrace[]` qua các màn hình.
+
+3. **Tối ưu hóa Gọi AI CLI (`invokeLocalAiCli` trong `cliRunner.ts`) & Tổng hợp Kịch bản (`generator.ts`)**:
+   - Truyền toàn bộ prompt qua luồng `stdin` thay vì đối số dòng lệnh (`args`).
+   - Khi gọi `claude -p`, truyền cờ `--strict-mcp-config` (không khởi tạo lại MCP server từ `.mcp.json` vì dữ liệu CDP Đa màn hình đã được thu thập sẵn), nâng ngưỡng timeout lên `45000ms` và lọc bỏ biến môi trường gây xung đột nested session.
+   - Nếu AI CLI không phản hồi, bộ tổng hợp thông minh (`synthesizeSpecsFromExploration`) sẽ tự động dựng kịch bản dựa trực tiếp trên chuỗi `ExplorationScreenTrace` thực tế vừa đi qua (mở URL thật $\rightarrow$ điền/bấm/cuộn theo đúng từ khóa trong prompt $\rightarrow$ kiểm chứng `assert` phần tử/văn bản thật), tuyệt đối không bao giờ trả về kịch bản mẫu của trang khác.
+
+4. **Giao diện 1-Prompt Duy Nhất (`GenerateSpecModal.tsx`)**:
+   - Loại bỏ ô nhập URL rời và nút "Khám phá trang" thủ công.
+   - Chỉ hiển thị một ô nhập Prompt tự nhiên (kèm khung tải ảnh thiết kế tùy chọn).
+   - Hiển thị nhật ký khám phá các màn hình (`ExplorationTrace`) ngay sau khi hệ thống xử lý xong để người dùng thấy rõ app đã tự động đi qua những màn hình nào và phát hiện những selector nào.
+
+---
+
+## Phase 11: Header AI Agent Switcher & 10-Agent Model Discovery
+
+### Objective
+Giúp kỹ sư QA biết chính xác hệ thống đang kết nối với **AI Agent CLI** nào và sử dụng **Model** gì ngay trên thanh `Header.tsx`, đồng thời cho phép chuyển đổi linh hoạt giữa các AI Agent đã cài đặt trên máy và vô hiệu hóa (`disabled`) các Agent chưa cài đặt.
+
+### Technical Design:
+1. **Danh mục 10 AI Agent CLI thông dụng (`cliRunner.ts`)**:
+   - Hỗ trợ kiểm tra 10 công cụ AI CLI phổ biến nhất:
+     1. **Antigravity CLI (`agy`)** — Model mặc định/cấu hình: `gemini-2.5-pro`
+     2. **Claude Code (`claude`)** — Đọc `~/.claude/settings.json` (`model` / `ANTHROPIC_MODEL`) hoặc `claude-sonnet-4-6`
+     3. **Gemini CLI (`gemini`)** — Đọc `~/.gemini/settings.json` (`model` / `GEMINI_MODEL`) hoặc `gemini-2.5-pro`
+     4. **OpenCode (`opencode`)** — Đọc `~/.config/opencode/opencode.json` / state hoặc `nemotron-3-ultra-free`
+     5. **Qwen Code (`qwen`)** — Đọc `~/.qwen/settings.json` (`model`) hoặc `qwen3-coder-plus`
+     6. **OpenAI Codex (`codex`)** — Đọc `~/.codex/config.json` / `OPENAI_MODEL` hoặc `gpt-5-codex`
+     7. **Aider (`aider`)** — Đọc `~/.aider.conf.yml` hoặc `claude-3-7-sonnet`
+     8. **Ollama (`ollama`)** — Đọc model từ `ollama list` hoặc `qwen2.5-coder`
+     9. **Block Goose (`goose`)** — Đọc `~/.config/goose/config.yaml` hoặc `gpt-4o`
+     10. **GitHub Copilot CLI (`copilot`)** — Model mặc định `claude-sonnet-4`
+   - **Cơ chế phát hiện chính xác**: Quét trực tiếp các thư mục thực thi (`~/.local/bin`, `~/.opencode/bin`, `/opt/homebrew/bin`, `/usr/local/bin`, `/usr/bin` và toàn bộ `$PATH`) bằng `fs.statSync` + `fs.accessSync(..., X_OK)` để tránh nhận nhầm lệnh nội建 (shell builtin như `continue`), đồng thời đọc phiên bản và tệp cấu hình cục bộ để lấy tên Model chính xác.
+
+2. **API Quản lý & Chuyển đổi AI Agent (`server/src/routes/runner.ts`)**:
+   - `GET /api/runner/ai-agents`: Trả về `activeAgentId` và danh sách 10 phần tử `AiAgentInfo` (gồm `id`, `name`, `command`, `installed`, `version`, `model`, `active`).
+   - `POST /api/runner/ai-agents/select`: Cập nhật `activeAgentId` (chỉ cho phép chọn Agent có `installed: true`). Khi `invokeLocalAiCli` chạy, hệ thống ưu tiên thực thi đúng Agent đang được người dùng chọn trước tiên.
+
+3. **Menu thả xuống nhỏ trên Header (`client/src/components/Header.tsx`)**:
+   - Thêm cụm điều khiển `AI Agent:` với `<Select size="small">` ngay trên thanh Header.
+   - Hiển thị rõ trên nhãn đang chọn: `<Tên Agent> (<Model>)` (ví dụ: `Antigravity CLI · gemini-2.5-pro`).
+   - Trong danh sách thả xuống hiển thị đủ 10 Agent:
+     - Các Agent đã cài đặt: hiển thị tên, phiên bản và tên Model đang dùng.
+     - Các Agent chưa cài đặt trên máy: đặt `disabled: true` kèm chú thích `(Chưa cài đặt)`.

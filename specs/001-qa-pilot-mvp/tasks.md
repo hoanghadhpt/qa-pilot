@@ -152,6 +152,29 @@ description: "Task list for QA Pilot MVP (v0.0.1) implementation"
 
 ---
 
+## Phase 10: One-Prompt Multi-Screen Autonomous Exploration & Spec Generation
+
+**Purpose**: Chuyển đổi sang luồng "1-Prompt Duy Nhất — Hệ thống Tự Động Hóa Toàn Bộ", hỗ trợ lệnh `scroll` / `wait` và Vòng lặp Khám phá Đa màn hình (Multi-Screen Iterative Exploration) qua CDP.
+
+- [X] T042 Mở rộng `StepAction` thêm `'scroll'` và `'wait'` trong `client/src/types/index.ts`, `server/src/services/specAdapter.ts`, `server/src/services/cliRunner.ts` và `client/src/components/StepEditor.tsx` per `FR-002`
+- [X] T043 Xây dựng Vòng lặp Khám phá Đa màn hình `exploreMultiStageFlow(prompt: string, defaultBaseUrl?: string)` và tối ưu hóa `invokeLocalAiCli` (truyền prompt qua `stdin`, bỏ load MCP thừa, timeout 45s) trong `server/src/services/cliRunner.ts` per `FR-011`
+- [X] T044 Cập nhật `server/src/routes/generator.ts` và `server/src/prompts/generator.md` để tự động bóc tách URL/ý định từ 1 câu prompt, chạy khám phá đa màn hình và tổng hợp kịch bản chính xác (loại bỏ hoàn toàn dummy fallback `Register.html`) per `FR-011`
+- [X] T045 Thiết kế lại `client/src/components/GenerateSpecModal.tsx` về 1 ô nhập Prompt duy nhất, hiển thị tiến trình tự động và nhật ký các màn hình đã khám phá (`ExplorationTrace`) per `FR-011`, `FR-014`
+- [X] T046 Kiểm thử thực tế E2E: (1) Kịch bản cuộn trang kiểm tra footer trên `https://vnexpress.net/`, và (2) Kịch bản thao tác chuyển qua nhiều màn hình/bước, đảm bảo sinh đúng selector và chạy đạt (`PASSED`)
+
+---
+
+## Phase 11: Header AI Agent Switcher & 10-Agent Model Discovery
+
+**Purpose**: Hiển thị menu thả xuống (`Select`) trên thanh Header giúp kỹ sư QA biết chính xác đang kết nối với AI Agent CLI nào và sử dụng Model gì trong 10 Agent thông dụng (`agy`, `claude`, `gemini`, `opencode`, `qwen`, `codex`, `aider`, `ollama`, `goose`, `copilot`), tự động vô hiệu hóa (`disabled`) các Agent chưa được cài đặt trên máy (`FR-015`).
+
+- [X] T047 Bổ sung kiểu dữ liệu `AiAgentInfo` vào `client/src/types/index.ts` và `server/src/services/cliRunner.ts`
+- [X] T048 Xây dựng bộ quét 10 AI Agent (`getAiAgents`, `selectAiAgent`, `resolveAgentBinary`, `detectAgentModel`) và ưu tiên gọi Agent đang chọn trong `invokeLocalAiCli` tại `server/src/services/cliRunner.ts` per `FR-015`
+- [X] T049 Bổ sung API `GET /api/runner/ai-agents` và `POST /api/runner/ai-agents/select` tại `server/src/routes/runner.ts` per `contracts/api.md`
+- [X] T050 Tích hợp dropdown chọn AI Agent và hiển thị Model vào `client/src/components/Header.tsx`, `client/src/hooks/useTestRunner.ts`, và `client/src/App.tsx` per `FR-014`, `FR-015`
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
