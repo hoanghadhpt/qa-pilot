@@ -1,10 +1,9 @@
 <!--
 Sync Impact Report
-- Version change: 1.0.0 → 1.1.0
-- Modified principles:
-  - Added VI. Minimalist Interface & Plain Functional Language
+- Version change: 1.1.0 → 1.2.0
+- Modified principles: None
 - Modified sections:
-  - Architecture & Technology Constraints (replaced Tailwind CSS with Ant Design v5 + minimal CSS variables)
+  - Architecture & Technology Constraints (Added Desktop Native Wrapper with Tauri v2 + Rust)
 - Removed sections: None
 - Templates requiring updates: None
 - Follow-up TODOs: None
@@ -34,6 +33,7 @@ All user-facing text, labels, buttons, statuses, and messages MUST use plain, co
 ## Architecture & Technology Constraints
 
 - **Monorepo Topology**: Node.js + Express + TypeScript backend (`server/`, port `4000`) and React 18 + Vite + Ant Design (`antd` v5) + minimal CSS variables SPA (`client/`, port `3000`). No Tailwind CSS or PostCSS utility bloat.
+- **Desktop Native Wrapper**: **Tauri v2** + **Rust** (`src-tauri/`) packages the application into standalone native executables for macOS (`.dmg`/`.app`) and Windows (`.msi`/`.exe`), using native WebViews (WebKit / WebView2) with zero Electron bloat, bundling the execution runner as an embedded managed sidecar.
 - **Browser & Inspection Protocol**: Browser automation and telemetry collection MUST operate via **Chrome DevTools Protocol (CDP)** (`http://127.0.0.1:9222` and `chrome-devtools-mcp`), enabling direct attachment to local Chrome sessions, low-overhead DOM/a11y inspection, and real-time network/console stream capture.
 - **Artifact Hygiene**: `tests/runs/`, `tests/temp/`, `*.png`, `*.har`, and `**/.env.local` MUST be excluded from version control via `.gitignore` at all times.
 
@@ -51,4 +51,4 @@ This Constitution supersedes ad-hoc implementation choices across `server/`, `cl
 - **MINOR**: Addition of a new principle, architectural constraint, or mandatory quality gate.
 - **PATCH**: Wording clarifications or non-semantic refinements.
 
-**Version**: 1.1.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-10-31
+**Version**: 1.2.0 | **Ratified**: 2026-10-31 | **Last Amended**: 2026-11-01

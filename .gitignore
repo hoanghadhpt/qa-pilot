@@ -1,12 +1,19 @@
 node_modules/
+**/node_modules/
 dist/
+**/dist/
 build/
+**/build/
 .DS_Store
 *.log
 
 # Test Artifacts and Temporary Uploads (NEVER COMMIT)
-tests/runs/
-tests/temp/
+**/tests/runs/**
+tests/runs/**
+**/tests/temp/**
+tests/temp/**
+**/midscene_run/**
+midscene_run/**
 *.png
 *.har
 

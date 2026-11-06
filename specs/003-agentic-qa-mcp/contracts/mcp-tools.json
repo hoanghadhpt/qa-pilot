@@ -1,0 +1,122 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QAPilotMCPToolsContract",
+  "description": "Danh sách các tools được MCP Server của QA Pilot cung cấp cho Antigravity Agent",
+  "tools": [
+    {
+      "name": "qa_launch_browser",
+      "description": "Khởi động hoặc kết nối vào phiên trình duyệt Chromium/Chrome để bắt đầu kiểm thử",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "headless": {
+            "type": "boolean",
+            "description": "Chạy ngầm (true) hoặc hiển thị cửa sổ trực tiếp cho người dùng xem (false). Mặc định là false.",
+            "default": false
+          },
+          "environment": {
+            "type": "string",
+            "description": "Tên môi trường mục tiêu (local, staging, production). Mặc định là local.",
+            "default": "local"
+          }
+        }
+      }
+    },
+    {
+      "name": "qa_navigate",
+      "description": "Điều hướng trình duyệt đến một URL cụ thể và chờ trang tải xong",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Địa chỉ URL đầy đủ cần truy cập"
+          }
+        },
+        "required": ["url"]
+      }
+    },
+    {
+      "name": "qa_act",
+      "description": "Thực hiện một hành động trên trang bằng ngôn ngữ tự nhiên (click, điền form, cuộn chuột, chọn option)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Mô tả hành động cần làm bằng tiếng Việt hoặc tiếng Anh (VD: 'Click vào nút Đăng ký', 'Điền email admin@test.com vào ô Email')"
+          },
+          "optional": {
+            "type": "boolean",
+            "description": "Nếu là true, bước này thất bại sẽ không dừng cả kịch bản",
+            "default": false
+          }
+        },
+        "required": ["action"]
+      }
+    },
+    {
+      "name": "qa_assert",
+      "description": "Xác thực một điều kiện thị giác hoặc ngữ nghĩa trên trang web bằng ngôn ngữ tự nhiên",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "assertion": {
+            "type": "string",
+            "description": "Nội dung cần xác thực (VD: 'Tiêu đề thông báo thành công xuất hiện', 'Nút Submit bị vô hiệu hóa')"
+          }
+        },
+        "required": ["assertion"]
+      }
+    },
+    {
+      "name": "qa_inspect",
+      "description": "Chụp màn hình trạng thái hiện tại, đánh dấu các phần tử tương tác (Set-of-Marks) và trả về tóm tắt ngữ nghĩa",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "qa_export_test",
+      "description": "Xuất toàn bộ chuỗi hành động và xác thực trong phiên hiện tại thành file kịch bản mã nguồn tái sử dụng",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "testName": {
+            "type": "string",
+            "description": "Tên kịch bản (VD: 'TC-01-user-registration')"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["playwright", "yaml"],
+            "default": "playwright",
+            "description": "Định dạng xuất: kịch bản TypeScript Playwright hoặc file YAML"
+          },
+          "targetPath": {
+            "type": "string",
+            "description": "Đường dẫn lưu file tương đối so với thư mục gốc dự án (VD: 'tests/e2e/register.spec.ts')"
+          }
+        },
+        "required": ["testName", "targetPath"]
+      }
+    },
+    {
+      "name": "qa_get_report",
+      "description": "Lấy đường dẫn tệp báo cáo trực quan HTML (Midscene Visual Playground) cho phiên hiện tại",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "qa_close_browser",
+      "description": "Đóng phiên trình duyệt và giải phóng tài nguyên",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    }
+  ]
+}
+

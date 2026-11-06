@@ -1,18 +1,16 @@
 {
   "name": "qa-pilot",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "license": "MIT",
-  "description": "Local-first automated testing dashboard and CDP execution engine for QA engineers",
+  "description": "Agentic AI Web Testing Platform for Antigravity powered by MCP, Midscene.js and Playwright",
   "scripts": {
-    "dev": "concurrently -n SERVER,CLIENT -c blue,green \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
-    "dev:server": "npm --prefix server run dev",
-    "dev:client": "npm --prefix client run dev",
-    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
-    "build": "npm --prefix server run build && npm --prefix client run build"
+    "build:mcp": "npm --prefix packages/mcp-server run build",
+    "dev:mcp": "npm --prefix packages/mcp-server run dev",
+    "build": "npm run build:mcp",
+    "dev": "npm run dev:mcp"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
   }
 }
-
