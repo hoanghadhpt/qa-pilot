@@ -27,12 +27,11 @@
 
 ### 🌟 Tính năng Cốt lõi
 
-1. **Khởi tạo 1 Lệnh (`npx qa-pilot init`)**:
-   - Tự động thiết lập cấu hình `.mcp.json`, cài đặt Skill tư duy và khởi tạo khung kiểm thử Playwright tiêu chuẩn chỉ trong 2 giây.
-2. **Kiến trúc 3 Tầng Độc lập (3-Tier Hybrid Architecture)**:
-   - **Tầng Skill (`.agents/skills/qa-pilot`)**: Mindset kiểm thử, cẩm nang SFDIPOT, từ điển payloads biên và script tra cứu offline (< 40ms) không cần internet.
-   - **Tầng Công cụ Thực thi (`packages/mcp-server`)**: Điều khiển Chromium thật (headed/headless), lắng nghe Chrome DevTools Protocol (CDP), lưu auth session không độ trễ (0.05s) và tự động sinh test suite.
-   - **Tầng Phân phối CLI (`packages/cli`)**: Đóng gói công cụ dòng lệnh phân phối rộng rãi qua npm/npx.
+1. **Khởi tạo & Khởi động 1 Lệnh (`npx qa-pilot`)**:
+   - Tự động thiết lập cấu hình `.mcp.json`, cài đặt Skill tư duy và khởi tạo khung kiểm thử Playwright tiêu chuẩn chỉ trong 2 giây qua `npx qa-pilot init`.
+   - Khởi động máy chủ MCP đa năng cho Antigravity / Claude / Cursor qua `npx -y qa-pilot server`.
+2. **Gói Thống nhất Đa năng (All-in-One Package `qa-pilot`)**:
+   - Tích hợp trọn gói cả bộ điều khiển trình duyệt Playwright, Midscene visual engine, cơ chế Triple-Oracle và cẩm nang Heuristics vào duy nhất 1 package `qa-pilot`.
 3. **Quan sát Triple-Oracle (UI + Console + Network)**:
    - Không chỉ nhìn giao diện mà còn bắt lỗi JavaScript ngầm (`TypeError`, `Unhandled Exception`) và lỗi mã HTTP mạng (4xx, 5xx, 401/403 session expired).
 4. **Chia sẻ Phiên Đăng nhập (Zero-Latency Auth Session)**:
@@ -89,8 +88,8 @@ File `.mcp.json` tại thư mục gốc dự án của bạn (được tạo t�
 {
   "mcpServers": {
     "qa-pilot": {
-      "command": "node",
-      "args": ["node_modules/qa-pilot/packages/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "qa-pilot", "server"],
       "env": {
         "NODE_ENV": "test"
       }
@@ -99,7 +98,17 @@ File `.mcp.json` tại thư mục gốc dự án của bạn (được tạo t�
 }
 ```
 
-*Nếu chạy từ source code của repo này, trỏ `args` tới: `["packages/mcp-server/dist/index.js"]`.*
+*Nếu chạy trực tiếp từ source code của repo này trong quá trình phát triển:*
+```json
+{
+  "mcpServers": {
+    "qa-pilot": {
+      "command": "node",
+      "args": ["packages/qa-pilot/dist/index.js"]
+    }
+  }
+}
+```
 
 ---
 
@@ -171,12 +180,11 @@ Khi kết nối với Antigravity IDE, Claude Code hoặc Cursor, bạn có th�
 
 ### 🌟 Key Highlights
 
-1. **One-Command Setup (`npx qa-pilot init`)**:
-   - Automatically bootstraps `.mcp.json`, the QA Persona Skill, and an enterprise Playwright starter structure in under 2 seconds.
-2. **3-Tier Hybrid Architecture**:
-   - **Skill Layer (`.agents/skills/qa-pilot`)**: Mindset rules, SFDIPOT taxonomy guide, boundary payloads, and zero-dependency offline search (< 40ms).
-   - **MCP Engine Layer (`packages/mcp-server`)**: Real Chromium browser driver (headed/headless), Chrome DevTools Protocol telemetry, zero-latency auth state (0.05s), and test suite engine.
-   - **CLI Distribution Layer (`packages/cli`)**: Standalone binary distributed via npm/npx.
+1. **Unified All-in-One Package (`qa-pilot`)**:
+   - Single package combining CLI scaffolding (`npx qa-pilot init`), the Playwright + Midscene MCP server (`npx -y qa-pilot server`), and local SFDIPOT heuristic knowledge.
+2. **One-Command Setup & Launch**:
+   - Run `npx qa-pilot init` to scaffold your project with full test architecture in 2 seconds.
+   - Run `npx -y qa-pilot server` to immediately serve MCP capabilities to Antigravity, Claude, or Cursor.
 3. **Triple-Oracle Observation (UI + Console + Network)**:
    - Validates UI layout while continuously monitoring background JavaScript exceptions (`TypeError`, `Unhandled Promise Rejections`) and HTTP failures (4xx, 5xx, 401/403 expired sessions).
 4. **Shared Auth Sessions (Zero-Latency Login)**:
@@ -233,8 +241,8 @@ Standard `.mcp.json` placed in your project root (created automatically by `npx 
 {
   "mcpServers": {
     "qa-pilot": {
-      "command": "node",
-      "args": ["node_modules/qa-pilot/packages/mcp-server/dist/index.js"],
+      "command": "npx",
+      "args": ["-y", "qa-pilot", "server"],
       "env": {
         "NODE_ENV": "test"
       }
@@ -243,7 +251,17 @@ Standard `.mcp.json` placed in your project root (created automatically by `npx 
 }
 ```
 
-*When developing within this repo, point `args` to: `["packages/mcp-server/dist/index.js"]`.*
+*When developing from local repository source:*
+```json
+{
+  "mcpServers": {
+    "qa-pilot": {
+      "command": "node",
+      "args": ["packages/qa-pilot/dist/index.js"]
+    }
+  }
+}
+```
 
 ---
 
@@ -315,12 +333,14 @@ qa-pilot/
 │   └── scripts/search-heuristics.js
 │
 ├── packages/
-│   ├── mcp-server/                 # MCP Execution Engine: Playwright, Midscene, Auth, CDP
-│   │   ├── src/
-│   │   └── dist/
-│   └── cli/                        # CLI Distribution: npx qa-pilot init command
-│       ├── bin/qa-pilot.js
+│   └── qa-pilot/                   # Unified NPM Package: CLI Init + MCP Server Engine
+│       ├── bin/qa-pilot.js         # Single binary for 'init' and 'server'
+│       ├── assets/                 # Embedded skill templates
 │       ├── src/
+│       │   ├── cli/                # Project initialization & scaffolding logic
+│       │   ├── engine/             # Playwright, Midscene, Suite & Auth engines
+│       │   ├── tools/              # MCP stdio tool handlers
+│       │   └── index.ts            # MCP Server stdio entrypoint
 │       └── dist/
 │
 ├── tests/                          # Enterprise Playwright E2E Architecture

@@ -9,15 +9,10 @@
   ],
   "description": "Agentic AI Web Testing Platform for Antigravity powered by MCP, Midscene.js and Playwright",
   "scripts": {
-    "build:mcp": "npm --prefix packages/mcp-server run build",
-    "build:cli": "npm --prefix packages/cli run build",
-    "dev:mcp": "npm --prefix packages/mcp-server run dev",
-    "build": "npm run build:mcp && npm run build:cli",
-    "test:cli": "node packages/cli/dist/verify-cli.js && node packages/cli/dist/verify-search.js",
-    "publish:mcp": "npm --prefix packages/mcp-server publish --access public",
-    "publish:cli": "npm --prefix packages/cli publish --access public",
-    "publish:all": "npm run publish:mcp && npm run publish:cli",
-    "dev": "npm run dev:mcp"
+    "build": "npm --prefix packages/qa-pilot run build",
+    "dev": "npm --prefix packages/qa-pilot run dev",
+    "test": "npm --prefix packages/qa-pilot test",
+    "publish:npm": "npm --prefix packages/qa-pilot publish --access public"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",

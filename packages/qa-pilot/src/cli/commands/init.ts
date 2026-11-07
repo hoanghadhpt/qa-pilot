@@ -62,8 +62,10 @@ export async function resolveSkillSourceDir(): Promise<string> {
 
   const candidates = [
     // Monorepo root relative
+    path.resolve(__dirname, '../../../../../.agents/skills/qa-pilot'),
     path.resolve(__dirname, '../../../../.agents/skills/qa-pilot'),
-    // Package root relative (if installed)
+    // Package root relative (installed package has assets/skills/qa-pilot)
+    path.resolve(__dirname, '../../../assets/skills/qa-pilot'),
     path.resolve(__dirname, '../../assets/skills/qa-pilot'),
     path.resolve(process.cwd(), '.agents/skills/qa-pilot')
   ];

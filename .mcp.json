@@ -2,7 +2,7 @@
   "mcpServers": {
     "qa-pilot": {
       "command": "node",
-      "args": ["packages/mcp-server/dist/index.js"]
+      "args": ["packages/qa-pilot/dist/index.js"]
     },
     "chrome-devtools": {
       "command": "npx",

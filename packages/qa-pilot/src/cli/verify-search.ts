@@ -3,7 +3,7 @@
  */
 
 // @ts-ignore
-import { searchHeuristics } from '../../../.agents/skills/qa-pilot/scripts/search-heuristics.js';
+import { searchHeuristics } from '../../../../.agents/skills/qa-pilot/scripts/search-heuristics.js';
 
 function runSearchVerifications() {
   console.log('=== BẮT ĐẦU KIỂM THỬ TÍCH HỢP CHO OFFLINE HEURISTICS SEARCH ===\n');

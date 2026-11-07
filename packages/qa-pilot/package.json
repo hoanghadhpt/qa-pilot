@@ -1,0 +1,39 @@
+{
+  "name": "qa-pilot",
+  "version": "0.0.1",
+  "description": "Agentic AI Web Testing Platform for Antigravity, Claude Code & Cursor powered by Midscene and Playwright",
+  "main": "dist/index.js",
+  "type": "module",
+  "files": [
+    "bin",
+    "dist",
+    "assets"
+  ],
+  "bin": {
+    "qa-pilot": "bin/qa-pilot.js",
+    "qa-pilot-mcp": "bin/qa-pilot.js"
+  },
+  "scripts": {
+    "copy-assets": "node -e \"import fs from 'node:fs'; fs.cpSync('../../.agents/skills/qa-pilot', './assets/skills/qa-pilot', { recursive: true });\"",
+    "build": "npm run copy-assets && tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test:cli": "node dist/cli/verify-cli.js && node dist/cli/verify-search.js",
+    "test:server": "node dist/verify-suite-management.js && node dist/verify-auth-session.js",
+    "test": "npm run test:cli && npm run test:server"
+  },
+  "dependencies": {
+    "@midscene/web": "^1.17.7",
+    "@modelcontextprotocol/sdk": "^1.6.1",
+    "@playwright/test": "^1.65.0",
+    "dotenv": "^16.4.7",
+    "playwright": "^1.49.1",
+    "yaml": "^2.9.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
+  }
+}

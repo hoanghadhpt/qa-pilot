@@ -10,7 +10,7 @@ import path from 'node:path';
 async function runTestViaMcp() {
   console.log('🔌 [MCP Client] Đang kết nối tới QA Pilot MCP Server qua stdio...');
 
-  const serverPath = path.resolve(process.cwd(), 'packages/mcp-server/dist/index.js');
+  const serverPath = path.resolve(process.cwd(), 'packages/qa-pilot/dist/index.js');
   const transport = new StdioClientTransport({
     command: 'node',
     args: [serverPath],

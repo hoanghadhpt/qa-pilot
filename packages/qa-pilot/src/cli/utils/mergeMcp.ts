@@ -42,15 +42,23 @@ export async function mergeMcpConfig(
   }
 
   // Determine server entrypoint
-  const serverPath = options.customServerPath || 'node_modules/qa-pilot/packages/mcp-server/dist/index.js';
-
-  currentConfig.mcpServers['qa-pilot'] = {
-    command: 'node',
-    args: [serverPath],
-    env: {
-      NODE_ENV: 'test'
-    }
-  };
+  if (options.customServerPath) {
+    currentConfig.mcpServers['qa-pilot'] = {
+      command: 'node',
+      args: [options.customServerPath],
+      env: {
+        NODE_ENV: 'test'
+      }
+    };
+  } else {
+    currentConfig.mcpServers['qa-pilot'] = {
+      command: 'npx',
+      args: ['-y', 'qa-pilot', 'server'],
+      env: {
+        NODE_ENV: 'test'
+      }
+    };
+  }
 
   const formattedJson = JSON.stringify(currentConfig, null, 2) + '\n';
 
