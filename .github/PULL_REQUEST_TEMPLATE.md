@@ -17,3 +17,4 @@ Fixes #(issue_number) or Closes #(issue_number)
 - [ ] I have executed `npm test` and all verification suites pass
 - [ ] I have added tests covering my changes where applicable
 - [ ] I have updated relevant documentation in `README.md`
+

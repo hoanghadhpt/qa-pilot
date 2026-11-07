@@ -1,10 +1,34 @@
-name: CI Pipeline
+name: CI Pipeline (Reference Template)
+
+# ==============================================================================
+# LƯU Ý / NOTE FOR CONTRIBUTORS & REPO CLONERS:
+#
+# 🇻🇳 Đây là mã nguồn của nền tảng QA Pilot thuần túy. Để tránh tiêu tốn credit
+# GitHub Actions runner không cần thiết trên upstream repo, quy trình CI này
+# ĐƯỢC ĐẶT Ở CHẾ ĐỘ THỦ CÔNG (workflow_dispatch) và KHÔNG TỰ ĐỘNG CHẠY KHI PUSH/PR.
+#
+# Khi bạn clone/fork dự án này về để làm pipeline kiểm thử riêng cho dự án của bạn:
+# - Bạn chỉ cần bỏ comment (#) ở các dòng `push` và `pull_request` bên dưới.
+# - Hoặc bấm nút "Run workflow" trong tab Actions trên GitHub để chạy thủ công.
+#
+# 🇬🇧 This repository contains the pure source code of the QA Pilot platform.
+# To prevent unintended GitHub Actions runner usage on the upstream repository,
+# automatic triggers on push/PR are disabled by default.
+#
+# If you clone or fork this repository for your own test automation project:
+# - Uncomment the `push` and `pull_request` blocks below to enable automated CI.
+# - Or trigger manually using the "Run workflow" button in the GitHub Actions tab.
+# ==============================================================================
 
 on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
+  # Kích hoạt thủ công qua giao diện GitHub Actions / Manual trigger only
+  workflow_dispatch:
+
+  # Bỏ comment nếu muốn tự động chạy khi push/PR lên repository của bạn:
+  # push:
+  #   branches: [master, main]
+  # pull_request:
+  #   branches: [master, main]
 
 jobs:
   verify:

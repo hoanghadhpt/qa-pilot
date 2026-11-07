@@ -1,10 +1,34 @@
-name: Playwright E2E Tests
+name: Playwright E2E Tests (Reference Template)
+
+# ==============================================================================
+# LƯU Ý / NOTE FOR CONTRIBUTORS & REPO CLONERS:
+#
+# 🇻🇳 Đây là mẫu pipeline kiểm thử E2E Playwright đa trình duyệt (có chia shard).
+# Trên repository mã nguồn QA Pilot này, quy trình ĐƯỢC ĐẶT Ở CHẾ ĐỘ THỦ CÔNG
+# (workflow_dispatch) và KHÔNG TỰ ĐỘNG CHẠY để tránh tiêu tốn GitHub Actions quota.
+#
+# Khi bạn clone/fork dự án này về để áp dụng kiểm thử cho hệ thống web của bạn:
+# - Bỏ comment (#) ở các dòng `push` và `pull_request` bên dưới để tự động chạy.
+# - Thiết lập biến bí mật `E2E_BASE_URL` trong Settings -> Secrets của repository.
+#
+# 🇬🇧 This is a multi-browser Playwright E2E workflow template with matrix sharding.
+# Automatic triggers are disabled on this pure engine repository to preserve
+# GitHub Actions runner credits.
+#
+# If you clone or fork this repository for your own web test automation:
+# - Uncomment the `push` and `pull_request` blocks below to enable automated E2E runs.
+# - Configure the `E2E_BASE_URL` secret under repository Settings -> Secrets.
+# ==============================================================================
 
 on:
-  push:
-    branches: [master, main]
-  pull_request:
-    branches: [master, main]
+  # Kích hoạt thủ công qua giao diện GitHub Actions / Manual trigger only
+  workflow_dispatch:
+
+  # Bỏ comment nếu muốn tự động chạy kiểm thử khi push/PR lên repository của bạn:
+  # push:
+  #   branches: [master, main]
+  # pull_request:
+  #   branches: [master, main]
 
 jobs:
   test:
@@ -53,4 +77,3 @@ jobs:
           name: playwright-report-shard-${{ strategy.job-index }}
           path: tests/runs/playwright-report/
           retention-days: 14
-

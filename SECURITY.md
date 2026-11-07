@@ -16,3 +16,4 @@ We take the security of QA Pilot seriously. If you discover a vulnerability or s
    - Step-by-step reproduction instructions or proof-of-concept
    - Potential impact
 3. We will acknowledge receipt of your report within 48 hours and work with you to patch the issue before public disclosure.
+
