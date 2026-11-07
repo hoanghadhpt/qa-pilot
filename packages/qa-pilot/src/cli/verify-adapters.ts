@@ -179,3 +179,4 @@ main().catch((err) => {
   console.error('\nLỗi khi chạy verify-adapters:', err);
   process.exit(1);
 });
+

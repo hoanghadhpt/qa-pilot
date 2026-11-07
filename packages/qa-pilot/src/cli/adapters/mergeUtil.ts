@@ -57,3 +57,4 @@ export async function mergeDelimiterBlock(
   await fs.writeFile(filePath, newContent, 'utf-8');
   return { action: 'merged', updated: true };
 }
+

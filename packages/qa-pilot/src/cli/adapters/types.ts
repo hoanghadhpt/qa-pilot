@@ -31,3 +31,4 @@ export interface AdapterResult {
   action: 'created' | 'merged' | 'skipped' | 'dry_run';
   error?: string;
 }
+
