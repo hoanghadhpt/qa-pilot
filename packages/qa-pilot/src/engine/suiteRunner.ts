@@ -102,10 +102,12 @@ export class SuiteRunner {
         }
       }
 
-      // Điều hướng đến URL ban đầu nếu có
+      // Điều hướng đến URL ban đầu nếu có với phiên sạch
       if (suite.target_url) {
         try {
+          await page.context().clearCookies().catch(() => {});
           await page.goto(suite.target_url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          await page.evaluate(() => localStorage.clear()).catch(() => {});
         } catch {}
       }
 

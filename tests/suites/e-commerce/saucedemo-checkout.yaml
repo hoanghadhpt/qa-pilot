@@ -1,21 +1,22 @@
 id: saucedemo-checkout
 module: e-commerce
-name: Bộ kiểm thử phân hệ E commerce
-description: Kiểm thử đăng nhập và mua hàng trên SauceDemo Swag Labs
-target_url: https://www.saucedemo.com
+name: Bộ kiểm thử phân hệ E-Commerce SauceDemo Swag Labs
+description: Kịch bản kiểm thử toàn diện Heuristics SFDIPOT trên nền tảng demo Swag Labs
+target_url: https://www.saucedemo.com/
 environment: local
 tags:
   - smoke
+  - regression
   - e2e
   - saucedemo
   - automated
   - standard-suite
-created_at: 2026-11-07T14:20:28.772Z
-updated_at: 2026-11-07T14:20:28.772Z
+created_at: 2026-11-07T14:35:00.000Z
+updated_at: 2026-11-07T14:35:00.000Z
 cases:
   - id: TC-ECOMMERCE-001
-    title: Thực hiện thành công trên Swag Labs
-    description: Kiểm thử đăng nhập và mua hàng trên SauceDemo Swag Labs
+    title: Đăng nhập thành công với tài khoản chuẩn (Happy Path)
+    description: Xác thực người dùng standard_user đăng nhập thành công và truy cập trang danh mục sản phẩm
     priority: P1
     type: happy_path
     tags:
@@ -24,28 +25,25 @@ cases:
       - core
       - happy_path
     preconditions:
-      - Trình duyệt đã mở và tải thành công trang https://www.saucedemo.com
-      - Môi trường kiểm thử hoạt động bình thường, backend sẵn sàng phản hồi
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
     steps:
       - step: 1
-        action: Điền thông tin hợp lệ vào ô Username
-        data: Nguyen Van Tester
-        expected: Ô Username hiển thị giá trị vừa nhập, không có cảnh báo lỗi
+        action: Điền "standard_user" vào ô "Username"
+        data: standard_user
+        expected: Ô Username hiển thị giá trị standard_user
       - step: 2
-        action: Điền thông tin hợp lệ vào ô Password
-        data: SecretPass@2026
-        expected: Ô Password hiển thị giá trị vừa nhập, không có cảnh báo lỗi
+        action: Điền "secret_sauce" vào ô "Password"
+        data: secret_sauce
+        expected: Ô Password được điền bảo mật
       - step: 3
-        action: Click vào nút Submit
-        expected: Hiển thị trạng thái xử lý và chuyển hướng hoặc hiển thị kết quả thành
-          công
+        action: Click vào nút "Login"
+        expected: Điều hướng thành công vào trang danh mục /inventory.html
     assertions:
-      - Tiêu đề Swag Labs hiển thị
+      - Products hiển thị
+
   - id: TC-ECOMMERCE-002
-    title: Kiểm tra chặn gửi dữ liệu khi bỏ trống các trường bắt buộc (Negative
-      Validation)
-    description: Đảm bảo người dùng không thể gửi form khi chưa điền các thông tin
-      quan trọng
+    title: Kiểm tra chặn gửi form khi bỏ trống Username (Negative Validation)
+    description: Đảm bảo hệ thống bắt buộc nhập Username trước khi đăng nhập
     priority: P1
     type: negative_validation
     tags:
@@ -54,171 +52,172 @@ cases:
       - required_fields
       - p1
     preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
     steps:
       - step: 1
-        action: Để trống tất cả các trường dữ liệu trên màn hình
-        expected: Các ô nhập liệu giữ nguyên trạng thái trống ban đầu
-      - step: 2
-        action: Click vào nút gửi dữ liệu hoặc nút hoàn thành
-        expected: Hệ thống chặn gửi yêu cầu và hiển thị cảnh báo validation
+        action: Click vào nút "Login"
+        expected: Hệ thống chặn gửi và hiển thị cảnh báo lỗi
     assertions:
-      - Thông báo lỗi bắt buộc (required field error) hiển thị dưới các ô nhập
-        liệu
-      - Trang web không bị điều hướng đi nơi khác
+      - Username is required hiển thị
+
   - id: TC-ECOMMERCE-003
-    title: Kiểm tra xác thực định dạng dữ liệu sai quy cách (Format Validation)
-    description: Xác thực cơ chế kiểm tra định dạng email, số điện thoại hoặc kiểu
-      dữ liệu chuyên biệt
+    title: Kiểm tra chặn gửi form khi bỏ trống Password (Negative Validation)
+    description: Đảm bảo hệ thống bắt buộc nhập Password khi đã có Username
     priority: P1
     type: negative_validation
     tags:
       - negative
-      - format_check
+      - validation
+      - required_fields
       - p1
     preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
     steps:
       - step: 1
-        action: Nhập địa chỉ email sai định dạng "tester_khong_hop_le_email"
-        data: tester_khong_hop_le_email
-        expected: Ô Email hiển thị chuỗi vừa nhập
+        action: Điền "standard_user" vào ô "Username"
+        data: standard_user
+        expected: Ô Username hiển thị standard_user
       - step: 2
-        action: Nhập số điện thoại chứa ký tự chữ "09012abcde"
-        data: 09012abcde
-        expected: Ô số điện thoại hiển thị chuỗi vừa nhập
-      - step: 3
-        action: Click vào nút xác nhận hoặc rời tiêu điểm (blur)
-        expected: Hệ thống phát hiện lỗi định dạng và hiển thị cảnh báo tương ứng
+        action: Click vào nút "Login"
+        expected: Hệ thống cảnh báo thiếu Password
     assertions:
-      - Cảnh báo định dạng không hợp lệ xuất hiện rõ ràng
-      - Yêu cầu mạng không gửi dữ liệu không hợp lệ lên máy chủ
+      - Password is required hiển thị
+
   - id: TC-ECOMMERCE-004
-    title: Kiểm tra giới hạn ký tự cực đại và độ ổn định bố cục (Boundary Value -
-      Max Length)
-    description: Kiểm tra trường nhập liệu khi người dùng cung cấp độ dài tối đa cho phép
-    priority: P2
-    type: boundary_value
+    title: Kiểm tra tài khoản bị khóa trong hệ thống (Locked Out User)
+    description: Xác thực cơ chế chặn đăng nhập với tài khoản vi phạm chính sách
+    priority: P1
+    type: negative_validation
     tags:
-      - boundary
-      - max_length
-      - p2
-    preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
-    steps:
-      - step: 1
-        action: Nhập chuỗi văn bản có độ dài cực đại (255 ký tự) vào ô văn bản chính
-        data: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-        expected: Ô văn bản nhận đủ độ dài hoặc tự động cắt ngắn ở giới hạn cho phép
-          (maxlength)
-      - step: 2
-        action: Kiểm tra bố cục giao diện xung quanh ô nhập liệu
-        expected: Bố cục (layout) không bị vỡ, chữ không bị tràn ra ngoài khung hiển thị
-    assertions:
-      - Khung nhập liệu không bị vỡ giao diện (no layout spill)
-      - Hệ thống xử lý mượt mà, không gặp lỗi treo trình duyệt
-  - id: TC-ECOMMERCE-005
-    title: Kiểm tra xử lý ký tự đặc biệt, Unicode và Naughty Strings (Boundary &
-      Robustness)
-    description: Đảm bảo ứng dụng hỗ trợ đầy đủ bộ mã UTF-8 và không bị crash khi
-      nhập chuỗi phức tạp
-    priority: P2
-    type: boundary_value
-    tags:
-      - boundary
-      - unicode
-      - special_chars
-      - p2
-    preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
-    steps:
-      - step: 1
-        action: Nhập dữ liệu chứa ký tự đặc biệt, Unicode có dấu và emoji vào form
-        data: Ṫëṡṫ Ứñïċöḋë 🌟 & < > " ' %00
-        expected: Hệ thống hiển thị đúng các ký tự đặc biệt mà không làm sai lệch bảng
-          mã UTF-8
-      - step: 2
-        action: Nhấn nút lưu hoặc kiểm tra hiển thị
-        expected: Dữ liệu được lưu trữ và hiển thị toàn vẹn
-    assertions:
-      - Ký tự hiển thị chính xác, không bị lỗi font hoặc biến thành ký tự lạ
-        (mojibake)
-      - Không có lỗi JavaScript Exception trong console
-  - id: TC-ECOMMERCE-006
-    title: Thăm dò an toàn phòng chống tấn công XSS (Security Probe -
-      Stored/Reflected XSS)
-    description: Xác minh các ô nhập liệu được làm sạch (sanitized/escaped) trước
-      khi hiển thị lại
-    priority: P2
-    type: security_probe
-    tags:
+      - negative
       - security
-      - xss
-      - guardrail
-      - p2
+      - p1
     preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
     steps:
       - step: 1
-        action: Nhập chuỗi thăm dò mã độc XSS vào trường nhập liệu
-        data: <script>console.log('xss-probe')</script>
-        expected: Hệ thống coi chuỗi là văn bản thuần túy (plain text)
+        action: Điền "locked_out_user" vào ô "Username"
+        data: locked_out_user
+        expected: Ô Username hiển thị locked_out_user
       - step: 2
-        action: Gửi dữ liệu và quan sát màn hình phản hồi
-        expected: Trang web mã hóa HTML entities (escape), không tự động thực thi script
-          độc hại
+        action: Điền "secret_sauce" vào ô "Password"
+        data: secret_sauce
+        expected: Ô Password được điền
+      - step: 3
+        action: Click vào nút "Login"
+        expected: Hiển thị thông báo tài khoản bị khóa
     assertions:
-      - Không có popup alert hay script lạ được thực thi trong trình duyệt
-      - Triple-Oracle không ghi nhận bất kỳ cảnh báo bảo mật nguy hiểm nào
-  - id: TC-ECOMMERCE-007
-    title: Thăm dò an toàn lỗi tràn dữ liệu SQL Injection (Security Probe - SQLi
-      Resilience)
-    description: Kiểm tra backend sử dụng parameterized queries hoặc ORM an toàn khi
-      gặp ký tự nháy đơn
+      - Sorry, this user has been locked out hiển thị
+
+  - id: TC-ECOMMERCE-005
+    title: Thử nghiệm tiêm mã độc SQL Injection (Security Probing)
+    description: Bơm chuỗi adversarial payload từ naughty-strings.json vào ô đăng nhập
     priority: P2
     type: security_probe
     tags:
       - security
       - sqli
-      - guardrail
       - p2
     preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
     steps:
       - step: 1
-        action: Nhập chuỗi ký tự thăm dò SQL Injection vào trường tìm kiếm hoặc form
-        data: "' OR '1'='1' --"
-        expected: Hệ thống nhận diện chuỗi tìm kiếm thông thường
+        action: Điền "' OR '1'='1" vào ô "Username"
+        data: "' OR '1'='1"
+        expected: Ô Username nhận chuỗi kiểm thử
       - step: 2
-        action: Nhấn tìm kiếm hoặc gửi dữ liệu
-        expected: Máy chủ phản hồi an toàn, không làm lộ stack trace hoặc lỗi cơ sở dữ
-          liệu
+        action: Điền "secret_sauce" vào ô "Password"
+        data: secret_sauce
+        expected: Ô Password được điền
+      - step: 3
+        action: Click vào nút "Login"
+        expected: Hệ thống từ chối an toàn mà không sập dịch vụ
     assertions:
-      - Không xuất hiện thông báo lỗi nội bộ máy chủ (HTTP 500)
-      - Màn hình không hiển thị chuỗi lỗi cú pháp SQL (SQL syntax error)
+      - Username and password do not match hiển thị
+
+  - id: TC-ECOMMERCE-006
+    title: Kiểm tra sai mật khẩu xác thực (Authentication Failure)
+    description: Xác thực cơ chế kiểm tra mật khẩu không chính xác
+    priority: P2
+    type: boundary_value
+    tags:
+      - boundary
+      - auth
+      - p2
+    preconditions:
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
+    steps:
+      - step: 1
+        action: Điền "standard_user" vào ô "Username"
+        data: standard_user
+        expected: Ô Username được điền
+      - step: 2
+        action: Điền "sai_mat_khau_123" vào ô "Password"
+        data: sai_mat_khau_123
+        expected: Ô Password được điền mật khẩu không đúng
+      - step: 3
+        action: Click vào nút "Login"
+        expected: Báo lỗi thông tin đăng nhập không khớp
+    assertions:
+      - Username and password do not match hiển thị
+
+  - id: TC-ECOMMERCE-007
+    title: Thêm sản phẩm vào giỏ hàng (Functionality Flow)
+    description: Xác thực luồng nghiệp vụ thêm sản phẩm và nút chuyển sang trạng thái Remove
+    priority: P1
+    type: happy_path
+    tags:
+      - core
+      - cart
+      - p1
+    preconditions:
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
+    steps:
+      - step: 1
+        action: Điền "standard_user" vào ô "Username"
+        data: standard_user
+        expected: Ô Username được điền
+      - step: 2
+        action: Điền "secret_sauce" vào ô "Password"
+        data: secret_sauce
+        expected: Ô Password được điền
+      - step: 3
+        action: Click vào nút "Login"
+        expected: Vào trang sản phẩm
+      - step: 4
+        action: Click vào nút "Add to cart"
+        expected: Nút chuyển sang trạng thái Remove
+    assertions:
+      - Remove hiển thị
+
   - id: TC-ECOMMERCE-008
-    title: Kiểm tra khả năng chịu lỗi khi click đúp liên tục (State Idempotency &
-      Debounce)
-    description: Xác minh hệ thống ngăn chặn việc gửi trùng lặp yêu cầu khi người
-      dùng vô tình nhấp chuột nhiều lần
+    title: Khôi phục trạng thái giỏ hàng sau khi hủy (Idempotency)
+    description: Đảm bảo thao tác thêm và xóa sản phẩm đưa trạng thái về ban đầu
     priority: P2
     type: idempotency
     tags:
       - idempotency
-      - double_submit
-      - debounce
+      - state
       - p2
     preconditions:
-      - Trình duyệt mở tại trang https://www.saucedemo.com
+      - Trình duyệt mở tại trang https://www.saucedemo.com/
     steps:
       - step: 1
-        action: Click liên tiếp 2 lần thật nhanh (Double-click) vào nút hành động chính
-        expected: Nút hành động được làm mờ (disabled) hoặc hiển thị biểu tượng loading
-          ngay sau lần click đầu tiên
+        action: Điền "standard_user" vào ô "Username"
+        data: standard_user
+        expected: Ô Username được điền
       - step: 2
-        action: Quan sát kết quả giao dịch hoặc phản hồi từ hệ thống
-        expected: Chỉ có đúng một yêu cầu mạng được xử lý thành công, không tạo bản ghi
-          trùng lặp
+        action: Điền "secret_sauce" vào ô "Password"
+        data: secret_sauce
+        expected: Ô Password được điền
+      - step: 3
+        action: Click vào nút "Login"
+        expected: Vào trang sản phẩm
+      - step: 4
+        action: Click vào nút "Add to cart"
+        expected: Nút chuyển sang Remove
+      - step: 5
+        action: Click vào nút "Remove"
+        expected: Nút hoàn nguyên về Add to cart
     assertions:
-      - Hệ thống không phát sinh lỗi xung đột dữ liệu (data conflict)
-      - Chỉ có một hành động hợp lệ duy nhất được ghi nhận
+      - Add to cart hiển thị

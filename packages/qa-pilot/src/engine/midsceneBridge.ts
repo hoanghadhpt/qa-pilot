@@ -256,11 +256,15 @@ export class MidsceneBridge {
 
     // Click patterns
     if (lower.startsWith('click ') || lower.startsWith('bấm ') || lower.startsWith('nhấp ') || lower.startsWith('chọn ')) {
-      const target = action.replace(/^(click|bấm|nhấp|chọn)\s+(vào\s+)?(nút\s+|ô\s+|mục\s+|tab\s+|chuyên mục\s+)?/i, '').trim().replace(/['"]/g, '');
+      let target = action.replace(/^(click|bấm|nhấp|chọn)\s+(vào\s+)?(nút\s+|ô\s+|mục\s+|tab\s+|chuyên mục\s+)?/i, '').trim();
+      if ((target.startsWith('"') && target.endsWith('"')) || (target.startsWith("'") && target.endsWith("'"))) {
+        target = target.slice(1, -1);
+      }
       
       const btn = this.page.getByRole('link', { name: new RegExp(`^${target}$`, 'i') })
         .or(this.page.getByRole('button', { name: new RegExp(target, 'i') }))
         .or(this.page.getByRole('link', { name: new RegExp(target, 'i') }))
+        .or(this.page.locator(`[data-test="${target}"], .${target}, #${target}`))
         .or(this.page.locator(`nav a:has-text("${target}"), header a:has-text("${target}"), a:has-text("${target}")`))
         .or(this.page.locator(`button:has-text("${target}")`))
         .or(this.page.locator(`label:has-text("${target}")`))
@@ -268,15 +272,22 @@ export class MidsceneBridge {
         .or(this.page.getByText(new RegExp(target, 'i')));
       
       await btn.first().click({ timeout: 5000 });
+      await this.page.waitForTimeout(300);
       return;
     }
 
     // Fill / Input patterns
     if (lower.includes('điền ') || lower.includes('nhập ') || lower.startsWith('fill ')) {
-      const match = action.match(/(?:điền|nhập|fill)\s+['"]?([^'"]+?)['"]?\s+vào\s+(?:ô\s+|trường\s+)?['"]?([^'"]+)['"]?/i);
+      const match = action.match(/(?:điền|nhập|fill)\s+(.+?)\s+vào\s+(?:ô\s+|trường\s+)?(.+)/i);
       if (match) {
-        const value = match[1].trim();
-        const fieldName = match[2].trim();
+        let value = match[1].trim();
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        let fieldName = match[2].trim();
+        if ((fieldName.startsWith('"') && fieldName.endsWith('"')) || (fieldName.startsWith("'") && fieldName.endsWith("'"))) {
+          fieldName = fieldName.slice(1, -1);
+        }
         
         // 1. Try placeholder
         const byPlaceholder = this.page.getByPlaceholder(new RegExp(fieldName, 'i'));
@@ -296,8 +307,9 @@ export class MidsceneBridge {
           }
         }
 
-        // 3. Try input by name or type or id
+        // 3. Try input by name or type or id or data-test
         const byNameOrId = this.page.locator(
+          `input[data-test*="${fieldName}" i], ` +
           `input[name*="${fieldName}" i], textarea[name*="${fieldName}" i], ` +
           `input[id*="${fieldName}" i], input[type*="${fieldName}" i], ` +
           `textarea, input[ng-model*="${fieldName}" i]`
@@ -323,20 +335,27 @@ export class MidsceneBridge {
   }
 
   /**
-   * Fallback heuristic assertion
+   * Fallback heuristic assertion with polling for page transitions & async rendering
    */
   private async fallbackAssert(assertion: string): Promise<void> {
     if (!this.page) return;
     const clean = assertion.replace(/['"]/g, '').trim();
-
-    // Check if clean target text appears anywhere on the page
-    const pageContent = await this.page.textContent('body');
     const terms = clean.split(' ').filter(w => w.length > 3);
-    const hasMatch = terms.some(t => pageContent?.toLowerCase().includes(t.toLowerCase()));
 
-    if (!hasMatch && !pageContent?.includes(clean)) {
-      throw new Error(`Nội dung khẳng định '${clean}' không xuất hiện trên giao diện trang`);
+    const startTime = Date.now();
+    while (Date.now() - startTime < 4000) {
+      const pageContent = await this.page.textContent('body').catch(() => '');
+      const hasMatch = terms.some(t => pageContent?.toLowerCase().includes(t.toLowerCase())) ||
+        (pageContent ? pageContent.includes(clean) : false);
+
+      if (hasMatch) {
+        return;
+      }
+      await this.page.waitForTimeout(150);
     }
+
+    const pageContent = await this.page.textContent('body').catch(() => '');
+    throw new Error(`Nội dung khẳng định '${clean}' không xuất hiện trên giao diện trang`);
   }
 }
 
