@@ -1,0 +1,233 @@
+id: auth-register
+module: auth
+name: Kiểm thử Kiểm thử đăng ký thành viên mới trên form demo
+description: Kiểm thử đăng ký thành viên mới trên form demo
+target_url: https://demo.automationtesting.in/Register.html
+environment: local
+tags:
+  - smoke
+  - regression
+  - p1
+  - automated
+  - standard-suite
+created_at: 2026-11-07T00:26:52.957Z
+updated_at: 2026-11-07T00:26:52.957Z
+cases:
+  - id: TC-AUTH-001
+    title: Thực hiện thành công trên Register
+    description: Kiểm thử đăng ký thành viên mới trên form demo
+    priority: P1
+    type: happy_path
+    tags:
+      - smoke
+      - p1
+      - core
+      - happy_path
+    preconditions:
+      - Trình duyệt đã mở và tải thành công trang
+        https://demo.automationtesting.in/Register.html
+      - Môi trường kiểm thử hoạt động bình thường, backend sẵn sàng phản hồi
+    steps:
+      - step: 1
+        action: Điền thông tin hợp lệ vào ô First Name
+        data: Nguyen Van Tester
+        expected: Ô First Name hiển thị giá trị vừa nhập, không có cảnh báo lỗi
+      - step: 2
+        action: Điền thông tin hợp lệ vào ô Last Name
+        data: Nguyen Van Tester
+        expected: Ô Last Name hiển thị giá trị vừa nhập, không có cảnh báo lỗi
+      - step: 3
+        action: Điền thông tin hợp lệ vào ô trường dữ liệu
+        data: Dữ liệu mẫu kiểm thử
+        expected: Ô trường dữ liệu hiển thị giá trị vừa nhập, không có cảnh báo lỗi
+      - step: 4
+        action: Điền thông tin hợp lệ vào ô trường dữ liệu
+        data: tester.standard@example.com
+        expected: Ô trường dữ liệu hiển thị giá trị vừa nhập, không có cảnh báo lỗi
+      - step: 5
+        action: Click vào nút Submit
+        expected: Hiển thị trạng thái xử lý và chuyển hướng hoặc hiển thị kết quả thành
+          công
+    assertions:
+      - Tiêu đề Register hiển thị
+  - id: TC-AUTH-002
+    title: Kiểm tra chặn gửi dữ liệu khi bỏ trống các trường bắt buộc (Negative
+      Validation)
+    description: Đảm bảo người dùng không thể gửi form khi chưa điền các thông tin
+      quan trọng
+    priority: P1
+    type: negative_validation
+    tags:
+      - negative
+      - validation
+      - required_fields
+      - p1
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Để trống tất cả các trường dữ liệu trên màn hình
+        expected: Các ô nhập liệu giữ nguyên trạng thái trống ban đầu
+      - step: 2
+        action: Click vào nút gửi dữ liệu hoặc nút hoàn thành
+        expected: Hệ thống chặn gửi yêu cầu và hiển thị cảnh báo validation
+    assertions:
+      - Thông báo lỗi bắt buộc (required field error) hiển thị dưới các ô nhập
+        liệu
+      - Trang web không bị điều hướng đi nơi khác
+  - id: TC-AUTH-003
+    title: Kiểm tra xác thực định dạng dữ liệu sai quy cách (Format Validation)
+    description: Xác thực cơ chế kiểm tra định dạng email, số điện thoại hoặc kiểu
+      dữ liệu chuyên biệt
+    priority: P1
+    type: negative_validation
+    tags:
+      - negative
+      - format_check
+      - p1
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Nhập địa chỉ email sai định dạng "tester_khong_hop_le_email"
+        data: tester_khong_hop_le_email
+        expected: Ô Email hiển thị chuỗi vừa nhập
+      - step: 2
+        action: Nhập số điện thoại chứa ký tự chữ "09012abcde"
+        data: 09012abcde
+        expected: Ô số điện thoại hiển thị chuỗi vừa nhập
+      - step: 3
+        action: Click vào nút xác nhận hoặc rời tiêu điểm (blur)
+        expected: Hệ thống phát hiện lỗi định dạng và hiển thị cảnh báo tương ứng
+    assertions:
+      - Cảnh báo định dạng không hợp lệ xuất hiện rõ ràng
+      - Yêu cầu mạng không gửi dữ liệu không hợp lệ lên máy chủ
+  - id: TC-AUTH-004
+    title: Kiểm tra giới hạn ký tự cực đại và độ ổn định bố cục (Boundary Value -
+      Max Length)
+    description: Kiểm tra trường nhập liệu khi người dùng cung cấp độ dài tối đa cho phép
+    priority: P2
+    type: boundary_value
+    tags:
+      - boundary
+      - max_length
+      - p2
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Nhập chuỗi văn bản có độ dài cực đại (255 ký tự) vào ô văn bản chính
+        data: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+        expected: Ô văn bản nhận đủ độ dài hoặc tự động cắt ngắn ở giới hạn cho phép
+          (maxlength)
+      - step: 2
+        action: Kiểm tra bố cục giao diện xung quanh ô nhập liệu
+        expected: Bố cục (layout) không bị vỡ, chữ không bị tràn ra ngoài khung hiển thị
+    assertions:
+      - Khung nhập liệu không bị vỡ giao diện (no layout spill)
+      - Hệ thống xử lý mượt mà, không gặp lỗi treo trình duyệt
+  - id: TC-AUTH-005
+    title: Kiểm tra xử lý ký tự đặc biệt, Unicode và Naughty Strings (Boundary &
+      Robustness)
+    description: Đảm bảo ứng dụng hỗ trợ đầy đủ bộ mã UTF-8 và không bị crash khi
+      nhập chuỗi phức tạp
+    priority: P2
+    type: boundary_value
+    tags:
+      - boundary
+      - unicode
+      - special_chars
+      - p2
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Nhập dữ liệu chứa ký tự đặc biệt, Unicode có dấu và emoji vào form
+        data: Ṫëṡṫ Ứñïċöḋë 🌟 & < > " ' %00
+        expected: Hệ thống hiển thị đúng các ký tự đặc biệt mà không làm sai lệch bảng
+          mã UTF-8
+      - step: 2
+        action: Nhấn nút lưu hoặc kiểm tra hiển thị
+        expected: Dữ liệu được lưu trữ và hiển thị toàn vẹn
+    assertions:
+      - Ký tự hiển thị chính xác, không bị lỗi font hoặc biến thành ký tự lạ
+        (mojibake)
+      - Không có lỗi JavaScript Exception trong console
+  - id: TC-AUTH-006
+    title: Thăm dò an toàn phòng chống tấn công XSS (Security Probe -
+      Stored/Reflected XSS)
+    description: Xác minh các ô nhập liệu được làm sạch (sanitized/escaped) trước
+      khi hiển thị lại
+    priority: P2
+    type: security_probe
+    tags:
+      - security
+      - xss
+      - guardrail
+      - p2
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Nhập chuỗi thăm dò mã độc XSS vào trường nhập liệu
+        data: <script>console.log('xss-probe')</script>
+        expected: Hệ thống coi chuỗi là văn bản thuần túy (plain text)
+      - step: 2
+        action: Gửi dữ liệu và quan sát màn hình phản hồi
+        expected: Trang web mã hóa HTML entities (escape), không tự động thực thi script
+          độc hại
+    assertions:
+      - Không có popup alert hay script lạ được thực thi trong trình duyệt
+      - Triple-Oracle không ghi nhận bất kỳ cảnh báo bảo mật nguy hiểm nào
+  - id: TC-AUTH-007
+    title: Thăm dò an toàn lỗi tràn dữ liệu SQL Injection (Security Probe - SQLi
+      Resilience)
+    description: Kiểm tra backend sử dụng parameterized queries hoặc ORM an toàn khi
+      gặp ký tự nháy đơn
+    priority: P2
+    type: security_probe
+    tags:
+      - security
+      - sqli
+      - guardrail
+      - p2
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Nhập chuỗi ký tự thăm dò SQL Injection vào trường tìm kiếm hoặc form
+        data: "' OR '1'='1' --"
+        expected: Hệ thống nhận diện chuỗi tìm kiếm thông thường
+      - step: 2
+        action: Nhấn tìm kiếm hoặc gửi dữ liệu
+        expected: Máy chủ phản hồi an toàn, không làm lộ stack trace hoặc lỗi cơ sở dữ
+          liệu
+    assertions:
+      - Không xuất hiện thông báo lỗi nội bộ máy chủ (HTTP 500)
+      - Màn hình không hiển thị chuỗi lỗi cú pháp SQL (SQL syntax error)
+  - id: TC-AUTH-008
+    title: Kiểm tra khả năng chịu lỗi khi click đúp liên tục (State Idempotency &
+      Debounce)
+    description: Xác minh hệ thống ngăn chặn việc gửi trùng lặp yêu cầu khi người
+      dùng vô tình nhấp chuột nhiều lần
+    priority: P2
+    type: idempotency
+    tags:
+      - idempotency
+      - double_submit
+      - debounce
+      - p2
+    preconditions:
+      - Trình duyệt mở tại trang https://demo.automationtesting.in/Register.html
+    steps:
+      - step: 1
+        action: Click liên tiếp 2 lần thật nhanh (Double-click) vào nút hành động chính
+        expected: Nút hành động được làm mờ (disabled) hoặc hiển thị biểu tượng loading
+          ngay sau lần click đầu tiên
+      - step: 2
+        action: Quan sát kết quả giao dịch hoặc phản hồi từ hệ thống
+        expected: Chỉ có đúng một yêu cầu mạng được xử lý thành công, không tạo bản ghi
+          trùng lặp
+    assertions:
+      - Hệ thống không phát sinh lỗi xung đột dữ liệu (data conflict)
+      - Chỉ có một hành động hợp lệ duy nhất được ghi nhận

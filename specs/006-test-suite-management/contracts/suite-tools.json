@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QA Pilot Test Suite Management Tools Contract",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "qa_generate_suite",
+      "description": "Tự động phân tích giao diện URL hoặc mô tả nghiệp vụ bằng AI để sinh ra trọn bộ Test Suite hoàn chỉnh với đầy đủ các ca kiểm thử chuẩn mực (Happy Path, Negative, Boundary, Security)",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "description": "Tên phân hệ hoặc tính năng (VD: 'auth', 'checkout', 'profile', 'products')",
+            "pattern": "^[a-z0-9_-]{2,30}$"
+          },
+          "url": {
+            "type": "string",
+            "description": "Địa chỉ URL của trang chức năng cần khảo sát và sinh test suite"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "Mô tả bổ sung về nghiệp vụ hoặc các kịch bản đặc thù cần bao quát"
+          },
+          "suiteId": {
+            "type": "string",
+            "description": "Mã định danh tùy chọn cho suite (mặc định sẽ tự sinh theo module)"
+          },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Các nhãn phân loại (VD: ['smoke', 'regression', 'p1'])"
+          }
+        },
+        "required": ["module"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "suiteId": { "type": "string" },
+          "module": { "type": "string" },
+          "filePath": { "type": "string" },
+          "caseCount": { "type": "number" },
+          "categories": { "type": "array", "items": { "type": "string" } },
+          "summary": { "type": "string" }
+        },
+        "required": ["suiteId", "module", "filePath", "caseCount", "summary"]
+      }
+    },
+    {
+      "name": "qa_run_suite",
+      "description": "Thực thi toàn bộ hoặc chọn lọc các test case trong Test Suite theo bộ lọc nhãn hoặc mức độ ưu tiên",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "suiteId": {
+            "type": "string",
+            "description": "Mã suite cần thực thi (VD: 'auth-login', 'checkout-cart')"
+          },
+          "filterTags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Chỉ chạy các test case có gắn các nhãn này (VD: ['smoke'])"
+          },
+          "priority": {
+            "type": "string",
+            "enum": ["P1", "P2", "P3", "P4"],
+            "description": "Lọc chạy theo mức độ ưu tiên"
+          },
+          "headless": {
+            "type": "boolean",
+            "default": false,
+            "description": "Chế độ chạy ngầm (true) hoặc hiển thị trình duyệt trực quan (false)"
+          }
+        },
+        "required": ["suiteId"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": { "type": "string" },
+          "suiteId": { "type": "string" },
+          "totalCases": { "type": "number" },
+          "passedCases": { "type": "number" },
+          "failedCases": { "type": "number" },
+          "durationMs": { "type": "number" },
+          "reportPath": { "type": "string" }
+        },
+        "required": ["runId", "suiteId", "totalCases", "passedCases", "failedCases", "reportPath"]
+      }
+    },
+    {
+      "name": "qa_list_suites",
+      "description": "Liệt kê danh sách tất cả các Test Suite và Test Module hiện có trong hệ thống",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "module": {
+            "type": "string",
+            "description": "Lọc theo tên phân hệ (tùy chọn)"
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "suites": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": { "type": "string" },
+                "module": { "type": "string" },
+                "name": { "type": "string" },
+                "caseCount": { "type": "number" },
+                "tags": { "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["id", "module", "name", "caseCount"]
+            }
+          }
+        },
+        "required": ["suites"]
+      }
+    },
+    {
+      "name": "qa_get_suite_report",
+      "description": "Lấy đường dẫn và thông tin tệp báo cáo trực quan HTML tổng hợp cấp Suite",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Mã phiên chạy suite. Nếu bỏ trống, lấy báo cáo của phiên chạy gần nhất."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "runId": { "type": "string" },
+          "reportPath": { "type": "string" },
+          "passRate": { "type": "number" },
+          "summary": { "type": "string" }
+        },
+        "required": ["runId", "reportPath", "passRate", "summary"]
+      }
+    },
+    {
+      "name": "qa_export_suite",
+      "description": "Xuất Test Suite thành mã nguồn kịch bản kiểm thử tự động Playwright TypeScript (.spec.ts) chuẩn",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "suiteId": {
+            "type": "string",
+            "description": "Mã suite cần xuất"
+          },
+          "format": {
+            "type": "string",
+            "enum": ["playwright", "yaml"],
+            "default": "playwright",
+            "description": "Định dạng xuất (mặc định là playwright)"
+          },
+          "targetPath": {
+            "type": "string",
+            "description": "Đường dẫn tùy chọn lưu tệp mã nguồn"
+          }
+        },
+        "required": ["suiteId"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "suiteId": { "type": "string" },
+          "format": { "type": "string" },
+          "targetPath": { "type": "string" },
+          "caseCount": { "type": "number" }
+        },
+        "required": ["suiteId", "format", "targetPath", "caseCount"]
+      }
+    }
+  ]
+}
+

@@ -1,0 +1,124 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QA Pilot Auth Session Tools Contract",
+  "version": "1.0.0",
+  "tools": [
+    {
+      "name": "qa_auth_save",
+      "description": "Lưu trạng thái xác thực hiện tại của trình duyệt (Cookies + LocalStorage) thành profile tái sử dụng",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Tên vai trò hoặc định danh tài khoản (VD: 'admin', 'staff', 'customer-vip')",
+            "pattern": "^[a-zA-Z0-9_-]{2,32}$"
+          },
+          "description": {
+            "type": "string",
+            "description": "Ghi chú ngắn về tài khoản hoặc môi trường thử nghiệm"
+          }
+        },
+        "required": ["role"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string" },
+          "filePath": { "type": "string" },
+          "cookieCount": { "type": "number" },
+          "originCount": { "type": "number" },
+          "status": { "type": "string", "enum": ["valid", "expiring_soon", "expired", "unknown"] },
+          "message": { "type": "string" }
+        },
+        "required": ["role", "filePath", "status", "message"]
+      }
+    },
+    {
+      "name": "qa_auth_load",
+      "description": "Nạp trạng thái phiên xác thực đã lưu vào ngữ cảnh trình duyệt, bỏ qua bước đăng nhập",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Tên vai trò cần nạp (VD: 'admin', 'staff')"
+          },
+          "targetUrl": {
+            "type": "string",
+            "description": "URL tùy chọn cần điều hướng đến ngay sau khi nạp session"
+          }
+        },
+        "required": ["role"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "role": { "type": "string" },
+          "loaded": { "type": "boolean" },
+          "status": { "type": "string", "enum": ["valid", "expiring_soon", "expired", "unknown"] },
+          "remainingSeconds": { "type": ["number", "null"] },
+          "message": { "type": "string" }
+        },
+        "required": ["role", "loaded", "status", "message"]
+      }
+    },
+    {
+      "name": "qa_auth_status",
+      "description": "Kiểm tra hạn sử dụng và tình trạng hợp lệ của token trong profile xác thực đã lưu",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Tên vai trò cần kiểm tra. Nếu bỏ trống, kiểm tra tất cả các profile có sẵn."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "profiles": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "role": { "type": "string" },
+                "status": { "type": "string", "enum": ["valid", "expiring_soon", "expired", "unknown"] },
+                "remainingMinutes": { "type": ["number", "null"] },
+                "expiresAt": { "type": ["string", "null"] },
+                "cookieCount": { "type": "number" },
+                "domains": { "type": "array", "items": { "type": "string" } }
+              },
+              "required": ["role", "status", "cookieCount"]
+            }
+          }
+        },
+        "required": ["profiles"]
+      }
+    },
+    {
+      "name": "qa_auth_clear",
+      "description": "Xóa sạch phiên xác thực trên trình duyệt hiện tại hoặc xóa profile lưu trên ổ đĩa",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Tên vai trò cần xóa khỏi ổ đĩa. Nếu bỏ trống, chỉ xóa cookies/storage trên trình duyệt hiện tại."
+          }
+        }
+      },
+      "outputSchema": {
+        "type": "object",
+        "properties": {
+          "cleared": { "type": "boolean" },
+          "target": { "type": "string" },
+          "message": { "type": "string" }
+        },
+        "required": ["cleared", "target", "message"]
+      }
+    }
+  ]
+}
+

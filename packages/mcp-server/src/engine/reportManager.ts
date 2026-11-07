@@ -4,6 +4,7 @@ import { QASession, QAStep, EnvironmentConfig } from '../types.js';
 import { globalRedactor } from '../security/redactor.js';
 import { oracleWatcher } from './oracleWatcher.js';
 import { modelConfigManager } from '../security/modelConfig.js';
+import { authManager } from './authManager.js';
 
 function escapeHtml(str: string): string {
   if (!str) return '';
@@ -1320,6 +1321,7 @@ export class ReportManager {
         </div>
       </div>
       <div class="top-actions">
+        ${authManager.getActiveRole() ? `<div class="badge-status" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.4);">ROLE: ${safeText(authManager.getActiveRole()!.toUpperCase())}</div>` : ''}
         <div class="badge-status ${isOverallPass ? 'status-pass' : 'status-fail'}">
           ${isOverallPass ? '✓ ALL TESTS PASSED' : '✕ TESTS FAILED'}
         </div>
@@ -1455,6 +1457,10 @@ export class ReportManager {
           <div class="spec-item">
             <span class="spec-label">Môi Trường</span>
             <span class="spec-val">${safeText(environment.name || 'Testing')} ${environment.isProduction ? '<span class="pill" style="color: #f87171; border-color: rgba(239, 68, 68, 0.4);">Production</span>' : '<span class="pill">Staging</span>'}</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">Auth Session Role</span>
+            <span class="spec-val">${authManager.getActiveRole() ? `<span class="pill" style="color: #38bdf8; border-color: rgba(14, 165, 233, 0.4); font-weight: 600;">${safeText(authManager.getActiveRole()!)}</span>` : '<span class="pill">Anonymous / Guest</span>'}</span>
           </div>
           <div class="spec-item">
             <span class="spec-label">URL Trang Đích</span>

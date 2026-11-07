@@ -245,6 +245,15 @@ export class MidsceneBridge {
       }
     }
 
+    // Heuristic: Submit / Confirm / Primary action button
+    if (lower.includes('submit') || lower.includes('nút xác nhận') || lower.includes('nút thực thi chính') || lower.includes('nút gửi') || lower.includes('nút đăng ký') || lower.includes('nút hoàn thành')) {
+      const submitBtn = this.page.locator('button[type="submit"], input[type="submit"], #submitbtn, button:has-text("Submit"), button:has-text("Xác nhận"), button:has-text("Đăng ký"), button:has-text("Lưu"), form button').first();
+      if (await submitBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+        await submitBtn.click({ timeout: 5000 });
+        return;
+      }
+    }
+
     // Click patterns
     if (lower.startsWith('click ') || lower.startsWith('bấm ') || lower.startsWith('nhấp ') || lower.startsWith('chọn ')) {
       const target = action.replace(/^(click|bấm|nhấp|chọn)\s+(vào\s+)?(nút\s+|ô\s+|mục\s+|tab\s+|chuyên mục\s+)?/i, '').trim().replace(/['"]/g, '');

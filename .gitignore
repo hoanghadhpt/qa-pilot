@@ -21,3 +21,10 @@ midscene_run/**
 **/.env.local
 .env
 
+# Auth Session Profiles & Storage States (NEVER COMMIT CREDENTIALS)
+**/tests/fixtures/auth/**
+tests/fixtures/auth/**
+!tests/fixtures/auth/.gitkeep
+*.auth.json
+
+

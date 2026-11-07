@@ -1,10 +1,13 @@
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { oracleWatcher } from './oracleWatcher.js';
+import { PlaywrightStorageState } from '../types.js';
 
 export interface LaunchOptions {
   headless?: boolean;
   cdpPort?: number;
   useSystemChrome?: boolean;
+  storageState?: string | PlaywrightStorageState;
+  role?: string;
 }
 
 export class BrowserManager {
@@ -28,24 +31,32 @@ export class BrowserManager {
       '--window-size=1280,900'
     ];
 
-    try {
-      // First try standard chromium
-      this.browser = await chromium.launch({
-        headless: this.isHeadless,
-        args: launchArgs
-      });
-    } catch {
-      // Fallback: try system installed Google Chrome
-      this.browser = await chromium.launch({
-        headless: this.isHeadless,
-        channel: 'chrome',
-        args: launchArgs
-      });
+    if (!this.browser) {
+      try {
+        // First try standard chromium
+        this.browser = await chromium.launch({
+          headless: this.isHeadless,
+          args: launchArgs
+        });
+      } catch {
+        // Fallback: try system installed Google Chrome
+        this.browser = await chromium.launch({
+          headless: this.isHeadless,
+          channel: 'chrome',
+          args: launchArgs
+        });
+      }
     }
 
-    this.context = await this.browser.newContext({
+    const contextOptions: any = {
       viewport: { width: 1280, height: 900 }
-    });
+    };
+
+    if (options.storageState) {
+      contextOptions.storageState = options.storageState;
+    }
+
+    this.context = await this.browser.newContext(contextOptions);
 
     this.page = await this.context.newPage();
     oracleWatcher.attach(this.page);
@@ -53,11 +64,45 @@ export class BrowserManager {
     return this.page;
   }
 
+  public getContext(): BrowserContext | null {
+    return this.context;
+  }
+
+  public getBrowser(): Browser | null {
+    return this.browser;
+  }
+
   public getPage(): Page | null {
     if (this.page && !this.page.isClosed()) {
       return this.page;
     }
     return null;
+  }
+
+  /**
+   * Tái tạo Context với Storage State mới (dành cho qa_auth_load / chuyển đổi vai trò)
+   */
+  public async reloadWithStorageState(storageState: PlaywrightStorageState): Promise<Page> {
+    if (!this.browser) {
+      await this.launch({ storageState });
+      return this.page!;
+    }
+
+    if (this.page && !this.page.isClosed()) {
+      await this.page.close().catch(() => {});
+    }
+    if (this.context) {
+      await this.context.close().catch(() => {});
+    }
+
+    this.context = await this.browser.newContext({
+      storageState: storageState as any,
+      viewport: { width: 1280, height: 900 }
+    });
+
+    this.page = await this.context.newPage();
+    oracleWatcher.attach(this.page);
+    return this.page;
   }
 
   public async close(): Promise<void> {

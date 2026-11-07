@@ -1,7 +1,7 @@
 import { Page, ConsoleMessage, Request, Response } from 'playwright';
 
 export interface OracleIssue {
-  type: 'console_error' | 'js_exception' | 'network_failure' | 'http_server_error';
+  type: 'console_error' | 'js_exception' | 'network_failure' | 'http_server_error' | 'auth_session_expired';
   message: string;
   timestamp: string;
   source?: string;
@@ -55,7 +55,16 @@ export class OracleWatcher {
     // 4. HTTP Status Oracle: 4xx and 5xx responses
     page.on('response', (res: Response) => {
       const status = res.status();
-      if (status >= 500) {
+      if (status === 401 || status === 403) {
+        const issue: OracleIssue = {
+          type: 'auth_session_expired',
+          message: `Lỗi xác thực HTTP ${status}: ${res.request().method()} ${res.url()} (Phiên đăng nhập có thể đã hết hạn)`,
+          timestamp: new Date().toISOString(),
+          source: res.url()
+        };
+        this.issues.push(issue);
+        this.stepDelta.push(issue);
+      } else if (status >= 500) {
         const issue: OracleIssue = {
           type: 'http_server_error',
           message: `Lỗi máy chủ HTTP ${status}: ${res.request().method()} ${res.url()}`,
@@ -63,6 +72,29 @@ export class OracleWatcher {
         };
         this.issues.push(issue);
         this.stepDelta.push(issue);
+      }
+    });
+
+    // 5. Navigation Oracle: Detect unexpected redirect to /login
+    page.on('framenavigated', (frame) => {
+      if (frame === page.mainFrame()) {
+        try {
+          const rawUrl = frame.url();
+          if (rawUrl && rawUrl !== 'about:blank') {
+            const urlObj = new URL(rawUrl);
+            const path = urlObj.pathname.toLowerCase();
+            if (path === '/login' || path === '/signin' || path.startsWith('/auth/login')) {
+              const issue: OracleIssue = {
+                type: 'auth_session_expired',
+                message: `Trang web bị chuyển hướng về màn hình đăng nhập: ${rawUrl}`,
+                timestamp: new Date().toISOString(),
+                source: rawUrl
+              };
+              this.issues.push(issue);
+              this.stepDelta.push(issue);
+            }
+          }
+        } catch {}
       }
     });
   }

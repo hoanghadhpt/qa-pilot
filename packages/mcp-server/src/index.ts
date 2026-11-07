@@ -15,6 +15,15 @@ import { handleInspect } from './tools/inspect.js';
 import { handleGetReport } from './tools/report.js';
 import { handleExportTest } from './tools/export.js';
 import { handlePlanTestMatrix } from './tools/planMatrix.js';
+import { handleAuthSave } from './tools/authSave.js';
+import { handleAuthLoad } from './tools/authLoad.js';
+import { handleAuthStatus } from './tools/authStatus.js';
+import { handleAuthClear } from './tools/authClear.js';
+import { handleGenerateSuite } from './tools/suiteGenerate.js';
+import { handleRunSuite } from './tools/suiteRun.js';
+import { handleListSuites } from './tools/suiteList.js';
+import { handleGetSuiteReport } from './tools/suiteReport.js';
+import { handleExportSuite } from './tools/suiteExport.js';
 import { globalRedactor } from './security/redactor.js';
 
 const server = new Server(
@@ -153,6 +162,178 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: 'qa_auth_save',
+        description: 'Lưu trạng thái xác thực hiện tại của trình duyệt (Cookies + LocalStorage) thành profile tái sử dụng',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            role: {
+              type: 'string',
+              description: 'Tên vai trò hoặc tài khoản (VD: "admin", "staff", "customer-vip")',
+            },
+            description: {
+              type: 'string',
+              description: 'Ghi chú mô tả ngắn về profile này',
+            },
+          },
+          required: ['role'],
+        },
+      },
+      {
+        name: 'qa_auth_load',
+        description: 'Nạp trạng thái phiên xác thực đã lưu vào trình duyệt, tức thì bỏ qua bước đăng nhập (0.05s)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            role: {
+              type: 'string',
+              description: 'Tên vai trò cần nạp (VD: "admin", "customer")',
+            },
+            targetUrl: {
+              type: 'string',
+              description: 'URL cần điều hướng đến ngay sau khi nạp session',
+            },
+          },
+          required: ['role'],
+        },
+      },
+      {
+        name: 'qa_auth_status',
+        description: 'Kiểm tra hạn sử dụng và tình trạng hợp lệ của token trong profile xác thực đã lưu',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            role: {
+              type: 'string',
+              description: 'Tên vai trò cần kiểm tra. Nếu bỏ trống, liệt kê tất cả các profile.',
+            },
+          },
+        },
+      },
+      {
+        name: 'qa_auth_clear',
+        description: 'Làm sạch cookies và localStorage trên trình duyệt hiện tại hoặc xóa profile lưu trên ổ đĩa',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            role: {
+              type: 'string',
+              description: 'Tên vai trò cần xóa file profile. Nếu bỏ trống, chỉ xóa session trên trình duyệt hiện tại.',
+            },
+          },
+        },
+      },
+      {
+        name: 'qa_generate_suite',
+        description: 'Tự động phân tích giao diện URL hoặc mô tả nghiệp vụ bằng AI để sinh ra trọn bộ Test Suite hoàn chỉnh với đầy đủ các ca kiểm thử chuẩn mực (Happy Path, Negative, Boundary, Security)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            module: {
+              type: 'string',
+              description: 'Tên phân hệ hoặc tính năng (VD: "auth", "checkout", "profile")',
+            },
+            url: {
+              type: 'string',
+              description: 'Địa chỉ URL của trang chức năng cần khảo sát và sinh test suite',
+            },
+            prompt: {
+              type: 'string',
+              description: 'Mô tả bổ sung về nghiệp vụ hoặc các kịch bản đặc thù cần bao quát',
+            },
+            suiteId: {
+              type: 'string',
+              description: 'Mã định danh tùy chọn cho suite (VD: "auth-login")',
+            },
+            tags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Các nhãn phân loại (VD: ["smoke", "regression"])',
+            },
+          },
+          required: ['module'],
+        },
+      },
+      {
+        name: 'qa_run_suite',
+        description: 'Thực thi toàn bộ hoặc chọn lọc các test case trong Test Suite theo bộ lọc nhãn hoặc mức độ ưu tiên',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            suiteId: {
+              type: 'string',
+              description: 'Mã suite cần thực thi (VD: "auth-register")',
+            },
+            filterTags: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Chỉ chạy các test case có gắn các nhãn này (VD: ["smoke"])',
+            },
+            priority: {
+              type: 'string',
+              enum: ['P1', 'P2', 'P3', 'P4'],
+              description: 'Lọc chạy theo mức độ ưu tiên',
+            },
+            headless: {
+              type: 'boolean',
+              default: false,
+              description: 'Chế độ chạy ngầm (true) hoặc hiển thị trình duyệt trực quan (false)',
+            },
+          },
+          required: ['suiteId'],
+        },
+      },
+      {
+        name: 'qa_list_suites',
+        description: 'Liệt kê danh sách tất cả các Test Suite và Test Module hiện có trong hệ thống',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            module: {
+              type: 'string',
+              description: 'Lọc theo tên phân hệ (tùy chọn)',
+            },
+          },
+        },
+      },
+      {
+        name: 'qa_get_suite_report',
+        description: 'Lấy đường dẫn và thông tin tệp báo cáo trực quan HTML tổng hợp cấp Suite',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            runId: {
+              type: 'string',
+              description: 'Mã phiên chạy suite. Nếu bỏ trống, lấy báo cáo của phiên chạy gần nhất.',
+            },
+          },
+        },
+      },
+      {
+        name: 'qa_export_suite',
+        description: 'Xuất Test Suite thành mã nguồn kịch bản kiểm thử tự động Playwright TypeScript (.spec.ts) chuẩn',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            suiteId: {
+              type: 'string',
+              description: 'Mã suite cần xuất',
+            },
+            format: {
+              type: 'string',
+              enum: ['playwright', 'yaml'],
+              default: 'playwright',
+              description: 'Định dạng xuất (mặc định là playwright)',
+            },
+            targetPath: {
+              type: 'string',
+              description: 'Đường dẫn tùy chọn lưu tệp mã nguồn',
+            },
+          },
+          required: ['suiteId'],
+        },
+      },
+      {
         name: 'qa_close_browser',
         description: 'Đóng trình duyệt và dọn dẹp phiên kiểm thử',
         inputSchema: {
@@ -194,6 +375,33 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case 'qa_export_test':
         result = await handleExportTest(args as any);
+        break;
+      case 'qa_auth_save':
+        result = await handleAuthSave(args as any);
+        break;
+      case 'qa_auth_load':
+        result = await handleAuthLoad(args as any);
+        break;
+      case 'qa_auth_status':
+        result = await handleAuthStatus((args as any) || {});
+        break;
+      case 'qa_auth_clear':
+        result = await handleAuthClear((args as any) || {});
+        break;
+      case 'qa_generate_suite':
+        result = await handleGenerateSuite(args as any);
+        break;
+      case 'qa_run_suite':
+        result = await handleRunSuite(args as any);
+        break;
+      case 'qa_list_suites':
+        result = await handleListSuites((args as any) || {});
+        break;
+      case 'qa_get_suite_report':
+        result = await handleGetSuiteReport((args as any) || {});
+        break;
+      case 'qa_export_suite':
+        result = await handleExportSuite(args as any);
         break;
       case 'qa_close_browser':
         await browserManager.close();
