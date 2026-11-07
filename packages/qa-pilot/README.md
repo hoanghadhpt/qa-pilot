@@ -1,67 +1,91 @@
-# qa-pilot
+# QA Pilot 🛸
 
 > **Agentic AI Web Testing Platform powered by Model Context Protocol (MCP), Midscene.js & Playwright**  
 > *Nền tảng kiểm thử web tự động thế hệ mới kết hợp AI Agent, Midscene.js và Playwright thông qua chuẩn MCP.*
 
-[![npm version](https://img.shields.io/npm/v/qa-pilot.svg)](https://www.npmjs.com/package/qa-pilot)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node: >=18.3.0](https://img.shields.io/badge/Node->=18.3.0-green.svg)](https://nodejs.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-E2E-orange.svg)](https://playwright.dev/)
 [![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6+-blue.svg)](https://www.typescriptlang.org/)
 
 ---
 
-## 🌐 Language Navigation / Chọn ngôn ngữ
+## 🌐 Choose Language / Chọn ngôn ngữ
 
-- [🇻🇳 Hướng dẫn sử dụng (Tiếng Việt)](#-tiếng-việt)
-- [🇬🇧 Usage Guide (English)](#-english)
+- [🇻🇳 Tiếng Việt](#-tiếng-việt)
+- [🇬🇧 English](#-english)
 
 ---
 
 <a name="-tiếng-việt"></a>
 # 🇻🇳 Tiếng Việt
 
-**qa-pilot** là gói công cụ tất-cả-trong-một (All-in-one Toolkit) biến các trợ lý AI (Google Antigravity IDE, Claude Code, Cursor, Windsurf) thành một **Kỹ sư QA Automation cao cấp**.
+**QA Pilot** biến trợ lý AI của bạn (Google Antigravity IDE, Claude Code, Cursor) thành một **Kỹ sư QA Automation cao cấp (Senior QA Automation Architect)**. Thay vì click chuột mù quáng, QA Pilot trang bị cho AI tư duy thử nghiệm đối kháng (SFDIPOT, BVA, Naughty Strings), cơ chế quan sát toàn diện **Triple-Oracle** (Giao diện + Console log + Network traffic) và khả năng lưu trữ **Test-as-Code** trực tiếp vào Git repository.
 
 ---
 
-### 1. Khởi tạo Dự án Kiểm thử (`npx qa-pilot init`)
+### 🌟 Tính năng Cốt lõi
 
-Tại thư mục gốc của bất kỳ dự án web nào (React, Vue, Next.js, Laravel, HTML...), bạn chỉ cần chạy:
+1. **Khởi tạo & Khởi động 1 Lệnh (`npx qa-pilot`)**:
+   - Tự động thiết lập cấu hình `.mcp.json`, cài đặt Skill tư duy và khởi tạo khung kiểm thử Playwright tiêu chuẩn chỉ trong 2 giây qua `npx qa-pilot init`.
+   - Khởi động máy chủ MCP đa năng cho Antigravity / Claude / Cursor qua `npx -y qa-pilot server`.
+2. **Gói Thống nhất Đa năng (All-in-One Package `qa-pilot`)**:
+   - Tích hợp trọn gói cả bộ điều khiển trình duyệt Playwright, Midscene visual engine, cơ chế Triple-Oracle và cẩm nang Heuristics vào duy nhất 1 package `qa-pilot`.
+3. **Quan sát Triple-Oracle (UI + Console + Network)**:
+   - Không chỉ nhìn giao diện mà còn bắt lỗi JavaScript ngầm (`TypeError`, `Unhandled Exception`) và lỗi mã HTTP mạng (4xx, 5xx, 401/403 session expired).
+4. **Chia sẻ Phiên Đăng nhập (Zero-Latency Auth Session)**:
+   - Lưu và nạp `storageState` trong 0.05 giây, tự động giải mã JWT `exp` và cookie `expires` để kiểm tra hạn dùng, bỏ qua hoàn toàn bước đăng nhập UI tốn thời gian.
+5. **AI Sinh Test Suite Chuẩn Doanh nghiệp**:
+   - Tự động phân tích DOM và sinh bộ kịch bản kiểm thử toàn diện: Happy Path, Negative Validation, Boundary Value, Security Probing, Idempotency.
+6. **Báo cáo Trực quan & Xuất Mã Playwright**:
+   - Tự động xuất dashboard HTML KPI trực quan cấp Suite và xuất mã Playwright TypeScript `.spec.ts` chuẩn Page Object Model.
+
+---
+
+### 🚀 Bắt đầu Nhanh (Quickstart)
+
+#### Cách 1: Khởi tạo vào bất kỳ dự án nào qua `npx` (Khuyến nghị)
+
+Tại thư mục gốc dự án web của bạn, chạy:
 
 ```bash
-# Khởi tạo toàn bộ: Skill tư duy QA + MCP Server config + Khung Playwright E2E
+# Khởi tạo trọn gói Skill + MCP Server + Khung Playwright (Tự động nhận diện agent)
 npx qa-pilot init
+
+# Khởi tạo quy tắc cho tất cả 10 coding agent phổ biến hiện nay
+npx qa-pilot init --agent all
+
+# Khởi tạo cho các agent cụ thể (Cursor, Claude Code, GitHub Copilot, ...)
+npx qa-pilot init --agent cursor,claude,copilot
+
+# Xem danh sách 10 coding agent được hỗ trợ và trạng thái phát hiện
+npx qa-pilot init --list-agents
+
+# Xem trước thay đổi mà không ghi file (Dry run)
+npx qa-pilot init --dry-run
 ```
 
-Lệnh trên sẽ tự động:
-1. Cài đặt **Skill tư duy QA** vào `.agents/skills/qa-pilot/` kèm bộ từ điển payloads biên (XSS, SQLi, Tiếng Việt, BVA).
-2. Tự động hợp nhất cấu hình MCP vào `.mcp.json` (bảo toàn các server hiện có và tự tạo file backup `.mcp.json.bak`).
-3. Khởi tạo khung kiểm thử Playwright tiêu chuẩn enterprise (`playwright.config.ts`, `tests/pages/base.page.ts`, `tests/fixtures/test.fixture.ts`, `tests/suites/`).
+#### Cách 2: Chạy trực tiếp từ mã nguồn Repo
 
-#### Các tùy chọn nâng cao:
 ```bash
-# Xem trước các thay đổi dự kiến mà không ghi vào đĩa
-npx qa-pilot init --dry-run
+# 1. Clone repository
+git clone https://github.com/hoangha1991/qa-pilot.git
+cd qa-pilot
 
-# Ghi đè file nếu đã tồn tại
-npx qa-pilot init --force
+# 2. Cài đặt dependencies và build
+npm install
+npm run build
 
-# Chỉ cài đặt Skill tư duy QA (dành cho AI Reviewer không cần mở browser)
-npx qa-pilot init --skill-only
-
-# Chỉ cấu hình tệp .mcp.json
-npx qa-pilot init --mcp-only
-
-# Khởi tạo Skill và MCP, bỏ qua việc tạo thư mục tests/
-npx qa-pilot init --skip-scaffold
+# 3. Chạy kiểm thử xác thực toàn bộ hệ thống
+npm run test:cli
 ```
 
 ---
 
-### 2. Cấu hình MCP Client (`.mcp.json`)
+### ⚙️ Cấu hình MCP Client
 
-Tệp `.mcp.json` tại thư mục gốc dự án của bạn (đã được tạo tự động bởi lệnh `init`):
+File `.mcp.json` tại thư mục gốc dự án của bạn (được tạo tự động qua `npx qa-pilot init`):
 
 ```json
 {
@@ -77,13 +101,23 @@ Tệp `.mcp.json` tại thư mục gốc dự án của bạn (đã được t�
 }
 ```
 
-Antigravity IDE, Claude Code và Cursor sẽ tự động phát hiện và kết nối với máy chủ MCP `qa-pilot`.
+*Nếu chạy trực tiếp từ source code của repo này trong quá trình phát triển:*
+```json
+{
+  "mcpServers": {
+    "qa-pilot": {
+      "command": "node",
+      "args": ["packages/qa-pilot/dist/index.js"]
+    }
+  }
+}
+```
 
 ---
 
-### 3. Tra cứu Heuristics & Payloads Cục bộ (Offline Search)
+### 🔍 Tra cứu Heuristics & Payloads Cục bộ (Offline Search)
 
-Tra cứu chuỗi thử nghiệm biên và phương pháp SFDIPOT tức thì (< 40ms) không cần internet và không tốn token LLM:
+QA Pilot đính kèm bộ từ điển payloads biên và hướng dẫn SFDIPOT, có thể tra cứu tức thì qua dòng lệnh không tốn token LLM:
 
 ```bash
 # Tra cứu theo danh mục (xss, sql_injection, unicode_vietnamese, boundary_lengths, whitespace_special, format_validation)
@@ -92,13 +126,15 @@ node .agents/skills/qa-pilot/scripts/search-heuristics.js --category bva
 # Tra cứu theo từ khóa
 node .agents/skills/qa-pilot/scripts/search-heuristics.js --query "boundary"
 
-# Liệt kê tất cả danh mục
+# Liệt kê tất cả danh mục payload có sẵn
 node .agents/skills/qa-pilot/scripts/search-heuristics.js --list-categories
 ```
 
 ---
 
-### 4. Kịch bản Prompt Mẫu tương tác với AI qua Chat
+### 💬 Kịch bản Mẫu Tương tác qua Chat với AI
+
+Khi kết nối với Antigravity IDE, Claude Code hoặc Cursor, bạn có thể ra lệnh bằng tiếng Việt tự nhiên:
 
 - **Khảo sát & Lên kế hoạch kiểm thử**:
   > *"Khảo sát form https://demo.automationtesting.in/Register.html và lập Test Matrix bằng phương pháp SFDIPOT"*
@@ -115,7 +151,7 @@ node .agents/skills/qa-pilot/scripts/search-heuristics.js --list-categories
 
 ---
 
-### 5. Bảng Công cụ MCP Cốt lõi
+### 🛠️ Danh mục Công cụ MCP Cốt lõi
 
 | Công cụ | Tham số chính | Mô tả chức năng |
 | :--- | :--- | :--- |
@@ -141,47 +177,71 @@ node .agents/skills/qa-pilot/scripts/search-heuristics.js --list-categories
 <a name="-english"></a>
 # 🇬🇧 English
 
-**qa-pilot** is the all-in-one toolkit transforming AI coding assistants (Google Antigravity IDE, Claude Code, Cursor, Windsurf) into an elite **Senior QA Automation Architect**.
+**QA Pilot** transforms your AI coding assistant (Google Antigravity IDE, Claude Code, Cursor) into an elite **Senior QA Automation Architect**. Rather than clicking blindly on elements, QA Pilot equips AI agents with professional testing heuristics (SFDIPOT, BVA, Naughty Strings), **Triple-Oracle observation** (UI + Console + Network), zero-latency session handling, and native **Test-as-Code** persistence stored directly in your Git repository.
 
 ---
 
-### 1. Initialize a Project (`npx qa-pilot init`)
+### 🌟 Key Highlights
+
+1. **Unified All-in-One Package (`qa-pilot`)**:
+   - Single package combining CLI scaffolding (`npx qa-pilot init`), the Playwright + Midscene MCP server (`npx -y qa-pilot server`), and local SFDIPOT heuristic knowledge.
+2. **One-Command Setup & Launch**:
+   - Run `npx qa-pilot init` to scaffold your project with full test architecture in 2 seconds.
+   - Run `npx -y qa-pilot server` to immediately serve MCP capabilities to Antigravity, Claude, or Cursor.
+3. **Triple-Oracle Observation (UI + Console + Network)**:
+   - Validates UI layout while continuously monitoring background JavaScript exceptions (`TypeError`, `Unhandled Promise Rejections`) and HTTP failures (4xx, 5xx, 401/403 expired sessions).
+4. **Shared Auth Sessions (Zero-Latency Login)**:
+   - Save and restore browser `storageState` in 0.05 seconds with automatic base64url JWT `exp` and cookie `expires` inspection—skipping repetitive UI logins.
+5. **AI Heuristic Test Suite Generator**:
+   - Synthesizes full multi-dimensional test suites from DOM analysis: Happy Path, Boundary Value Analysis, Negative Validation, Security Probing, and Idempotency.
+6. **Executive HTML Reports & Code Export**:
+   - Generates dark-mode visual dashboards with step-by-step screenshots and exports YAML suites into clean Playwright TypeScript `.spec.ts` files.
+
+---
+
+### 🚀 Quickstart
+
+#### Option 1: Bootstrap into any web project via `npx` (Recommended)
 
 Run directly at the root of your web project:
 
 ```bash
-# Full bootstrap: QA Persona Skill + MCP Server config + Enterprise Playwright scaffolding
+# Full bootstrap with smart auto-detection for installed coding agents
 npx qa-pilot init
+
+# Bootstrap rules and skills for all 10 common AI coding agents
+npx qa-pilot init --agent all
+
+# Bootstrap for specific coding assistants (Cursor, Claude Code, GitHub Copilot, etc.)
+npx qa-pilot init --agent cursor,claude,copilot
+
+# List all 10 supported coding agents and detection status
+npx qa-pilot init --list-agents
+
+# Preview changes without modifying files (Dry run)
+npx qa-pilot init --dry-run
 ```
 
-This command automatically:
-1. Installs the **QA Persona Skill** into `.agents/skills/qa-pilot/` with curated boundary payloads (XSS, SQLi, Unicode, BVA).
-2. Merges MCP configuration into `.mcp.json` (preserving existing servers and generating a `.mcp.json.bak` backup).
-3. Scaffolds a production-grade Playwright E2E framework (`playwright.config.ts`, `tests/pages/base.page.ts`, `tests/fixtures/test.fixture.ts`, `tests/suites/`).
+#### Option 2: Clone & Run from Repository Source
 
-#### Advanced Options:
 ```bash
-# Preview actions without writing to disk
-npx qa-pilot init --dry-run
+# 1. Clone repository
+git clone https://github.com/hoangha1991/qa-pilot.git
+cd qa-pilot
 
-# Overwrite existing files
-npx qa-pilot init --force
+# 2. Install dependencies & build packages
+npm install
+npm run build
 
-# Install only QA Skill & Heuristics (for AI reviewers, no browser required)
-npx qa-pilot init --skill-only
-
-# Configure only .mcp.json
-npx qa-pilot init --mcp-only
-
-# Skip creating tests/ folder
-npx qa-pilot init --skip-scaffold
+# 3. Execute test verification suite
+npm run test:cli
 ```
 
 ---
 
-### 2. MCP Client Configuration (`.mcp.json`)
+### ⚙️ MCP Client Configuration
 
-Your project `.mcp.json` (generated automatically by `qa-pilot init`):
+Standard `.mcp.json` placed in your project root (created automatically by `npx qa-pilot init`):
 
 ```json
 {
@@ -197,11 +257,23 @@ Your project `.mcp.json` (generated automatically by `qa-pilot init`):
 }
 ```
 
+*When developing from local repository source:*
+```json
+{
+  "mcpServers": {
+    "qa-pilot": {
+      "command": "node",
+      "args": ["packages/qa-pilot/dist/index.js"]
+    }
+  }
+}
+```
+
 ---
 
-### 3. Offline Heuristic & Payload Search
+### 🔍 Offline Heuristics & Payload Search
 
-Search curated boundary testing payloads locally in under 40ms without sending requests to external APIs:
+Search curated adversarial payloads and SFDIPOT guidelines locally without LLM token costs:
 
 ```bash
 # Search by category (xss, sql_injection, unicode_vietnamese, boundary_lengths, whitespace_special, format_validation)
@@ -216,9 +288,9 @@ node .agents/skills/qa-pilot/scripts/search-heuristics.js --list-categories
 
 ---
 
-### 4. Natural Language Prompting Examples
+### 💬 Natural Language Prompt Examples
 
-With Antigravity IDE, Claude Code, or Cursor connected:
+With Antigravity IDE, Claude Code, or Cursor connected, converse naturally:
 
 - **Explore & Plan Tests**:
   > *"Inspect the form at https://demo.automationtesting.in/Register.html and formulate a Test Matrix using SFDIPOT heuristics."*
@@ -235,7 +307,7 @@ With Antigravity IDE, Claude Code, or Cursor connected:
 
 ---
 
-### 5. Core MCP Tools Reference
+### 🛠️ Core MCP Tools Reference
 
 | Tool | Parameters | Description |
 | :--- | :--- | :--- |
@@ -254,7 +326,60 @@ With Antigravity IDE, Claude Code, or Cursor connected:
 
 ---
 
+## 📂 Project Structure
+
+```text
+qa-pilot/
+├── .agents/skills/qa-pilot/        # Skill Layer: Persona, SFDIPOT, Naughty Strings, Offline search
+│   ├── SKILL.md
+│   ├── data/
+│   │   ├── heuristics/sfdipot.md
+│   │   ├── payloads/naughty-strings.json
+│   │   └── checklists/evaluation-checklist.md
+│   └── scripts/search-heuristics.js
+│
+├── packages/
+│   └── qa-pilot/                   # Unified NPM Package: CLI Init + MCP Server Engine
+│       ├── bin/qa-pilot.js         # Single binary for 'init' and 'server'
+│       ├── assets/                 # Embedded skill templates
+│       ├── src/
+│       │   ├── cli/                # Project initialization & scaffolding logic
+│       │   ├── engine/             # Playwright, Midscene, Suite & Auth engines
+│       │   ├── tools/              # MCP stdio tool handlers
+│       │   └── index.ts            # MCP Server stdio entrypoint
+│       └── dist/
+│
+├── tests/                          # Enterprise Playwright E2E Architecture
+│   ├── fixtures/test.fixture.ts    # Dependency Injection fixtures
+│   ├── pages/base.page.ts          # BasePage with Component Composition
+│   ├── suites/                     # Test-as-Code YAML suites
+│   ├── data/                       # DataFactory & test datasets
+│   └── e2e/                        # Playwright .spec.ts files
+│
+└── playwright.config.ts            # Root multi-browser configuration
+```
+
+---
+
+## 🛡️ Security & Privacy Guardrails
+
+- **Zero Database Persistence**: All test suites, auth sessions, and reports are stored locally as files in your workspace—no external database required.
+- **Production Safety Gate**: Destructive actions (`delete`, `remove`, `payment`) are blocked on environments marked `is_production: true`.
+- **Dynamic Secret Redaction**: Passwords, tokens, and authorization headers are masked as `[REDACTED]` in all logs, outputs, and HTML reports.
+- **Git Protection**: `tests/runs/`, `tests/fixtures/auth/`, and `.env` files are automatically excluded by `.gitignore`.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+1. Fork the repository and create a feature branch (`git checkout -b feature/my-feature`).
+2. Verify all tests pass (`npm run build && npm run test:cli`).
+3. Commit with conventional commit messages (`feat: add new capability`).
+4. Push to your branch and submit a Pull Request.
+
+---
+
 ## 📄 License
 
-Distributed under the **MIT License**.
-
+Distributed under the **MIT License**. See [LICENSE](LICENSE) for details.

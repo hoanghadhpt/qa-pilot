@@ -28,4 +28,9 @@ tests/fixtures/auth/**
 !tests/fixtures/auth/.gitkeep
 *.auth.json
 
+# Temporary verification directories
+.temp_*
+**/.temp_*
+
+
 

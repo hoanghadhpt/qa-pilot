@@ -9,6 +9,11 @@ import {
   TEST_FIXTURE_TEMPLATE,
   GITKEEP_CONTENT
 } from '../templates/seedAssets.js';
+import {
+  resolveTargetAdapters,
+  executeAdapters,
+  listSupportedAgents
+} from '../adapters/index.js';
 
 export interface CliOptions {
   targetDir: string;
@@ -18,6 +23,8 @@ export interface CliOptions {
   mcpOnly: boolean;
   skipScaffold: boolean;
   customMcpPath?: string;
+  agents?: string[];
+  listAgents?: boolean;
 }
 
 export function parseCliArgs(args: string[]): CliOptions {
@@ -44,6 +51,15 @@ export function parseCliArgs(args: string[]): CliOptions {
       options.skipScaffold = true;
     } else if (arg === '--mcp-path') {
       options.customMcpPath = args[++i];
+    } else if (arg === '--list-agents') {
+      options.listAgents = true;
+    } else if (arg === '--agent' || arg.startsWith('--agent=')) {
+      options.agents = options.agents || [];
+      if (arg.startsWith('--agent=')) {
+        options.agents.push(arg.slice('--agent='.length));
+      } else if (i + 1 < args.length && !args[i + 1].startsWith('-')) {
+        options.agents.push(args[++i]);
+      }
     } else if (!arg.startsWith('-') && options.targetDir === '.') {
       options.targetDir = arg;
     }
@@ -84,6 +100,12 @@ export async function runCli(rawArgs: string[]): Promise<number> {
   const options = parseCliArgs(args);
   const targetDir = path.resolve(process.cwd(), options.targetDir);
 
+  if (options.listAgents) {
+    const list = await listSupportedAgents(targetDir);
+    console.log(list);
+    return 0;
+  }
+
   const modePrefix = options.dryRun ? '[DRY RUN] ' : '';
   console.log(`${modePrefix}Bắt đầu khởi tạo môi trường QA Pilot tại: ${targetDir}`);
 
@@ -96,25 +118,59 @@ export async function runCli(rawArgs: string[]): Promise<number> {
 
   const summary = {
     skillsInstalled: false,
+    adaptersCount: 0,
     mcpConfigured: false,
     scaffoldCreated: false,
     filesAffected: [] as string[]
   };
 
-  // 1. Install Skill Layer (.agents/skills/qa-pilot)
+  // 1. Install Skill Layer & Coding Agent Adapters
   if (!options.mcpOnly) {
+    let targetAdapters;
     try {
-      const skillSrc = await resolveSkillSourceDir();
-      const skillDest = path.join(targetDir, '.agents/skills/qa-pilot');
-      console.log(`${modePrefix}- Cài đặt Skill vào: .agents/skills/qa-pilot/`);
-      const copied = await copyDirectoryRecursive(skillSrc, skillDest, {
+      targetAdapters = await resolveTargetAdapters(targetDir, options.agents);
+    } catch (err: any) {
+      console.error(`Lỗi: ${err.message}`);
+      return 1;
+    }
+
+    // A. Antigravity Skill installation
+    if (targetAdapters.some((a) => a.id === 'antigravity')) {
+      try {
+        const skillSrc = await resolveSkillSourceDir();
+        const skillDest = path.join(targetDir, '.agents/skills/qa-pilot');
+        console.log(`${modePrefix}- Cài đặt Skill vào: .agents/skills/qa-pilot/`);
+        const copied = await copyDirectoryRecursive(skillSrc, skillDest, {
+          dryRun: options.dryRun,
+          force: options.force
+        });
+        summary.skillsInstalled = true;
+        summary.filesAffected.push(...copied);
+      } catch (err: any) {
+        console.warn(`Cảnh báo: Không thể sao chép thư mục skill: ${err.message}`);
+      }
+    }
+
+    // B. Other Agent Adapters (Cursor, Claude, Copilot, Windsurf, Cline, Continue, Aider, OpenHands, Gemini)
+    const otherAdapters = targetAdapters.filter((a) => a.id !== 'antigravity');
+    if (otherAdapters.length > 0) {
+      console.log(
+        `${modePrefix}- Thiết lập quy tắc cho ${otherAdapters.length} coding agent (${otherAdapters.map((a) => a.name).join(', ')})`
+      );
+      const adapterResults = await executeAdapters(targetDir, otherAdapters, {
         dryRun: options.dryRun,
         force: options.force
       });
-      summary.skillsInstalled = true;
-      summary.filesAffected.push(...copied);
-    } catch (err: any) {
-      console.warn(`Cảnh báo: Không thể sao chép thư mục skill: ${err.message}`);
+
+      for (const res of adapterResults) {
+        if (res.action !== 'skipped') {
+          summary.filesAffected.push(res.targetPath);
+          summary.adaptersCount++;
+        }
+        console.log(
+          `  [${res.agentId}] -> ${path.relative(targetDir, res.targetPath)} (${res.action})`
+        );
+      }
     }
   }
 
@@ -172,6 +228,7 @@ export async function runCli(rawArgs: string[]): Promise<number> {
 
   console.log(`\n${modePrefix}Khởi tạo hoàn tất:`);
   console.log(`  - Tầng Skill (.agents/skills/qa-pilot): ${summary.skillsInstalled ? 'Đã cài đặt' : 'Bỏ qua'}`);
+  console.log(`  - Quy tắc Coding Agent đã tạo/cập nhật: ${summary.adaptersCount} adapter`);
   console.log(`  - Tầng MCP Server (.mcp.json)         : ${summary.mcpConfigured ? 'Đã cấu hình' : 'Bỏ qua'}`);
   console.log(`  - Khung Playwright E2E (tests/)       : ${summary.scaffoldCreated ? 'Đã khởi tạo' : 'Bỏ qua'}`);
   if (options.dryRun) {
@@ -180,4 +237,3 @@ export async function runCli(rawArgs: string[]): Promise<number> {
 
   return 0;
 }
-

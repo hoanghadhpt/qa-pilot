@@ -4,7 +4,7 @@
  * QA Pilot Unified CLI & MCP Server Binary
  *
  * Usage:
- *   npx qa-pilot init [options]    -> Scaffold Playwright tests & .agents/skills/qa-pilot
+ *   npx qa-pilot init [options]    -> Scaffold Playwright tests, Agent Skills & Rules
  *   npx qa-pilot server            -> Launch QA Pilot Model Context Protocol (MCP) Server
  */
 
@@ -37,24 +37,26 @@ if (isServer) {
   });
 } else {
   console.log(`
-QA Pilot (v0.0.2) - Agentic AI Web Testing Platform
+QA Pilot (v0.0.3) - Agentic AI Web Testing Platform
 
 Cách dùng:
-  qa-pilot init [targetDir] [options]   Khởi tạo Skill, cấu hình .mcp.json và khung Playwright
+  qa-pilot init [targetDir] [options]   Khởi tạo Skill/Rules, .mcp.json và khung Playwright
   qa-pilot server                      Khởi động máy chủ MCP Server qua luồng stdio
 
 Tùy chọn cho lệnh init:
+  --agent <names>    Tên coding agent (cursor, claude, copilot, windsurf, cline, ...) hoặc 'all'
+  --list-agents      Hiển thị danh sách 10 coding agent được hỗ trợ và thoát
   --dry-run          Xem trước các thay đổi dự kiến mà không ghi vào đĩa
-  --force            Ghi đè tệp cấu hình nếu đã tồn tại
-  --skill-only       Chỉ cài đặt tầng Skill (.agents/skills/qa-pilot)
+  --force, -f        Ghi đè tệp cấu hình nếu đã tồn tại
+  --skill-only       Chỉ cài đặt tầng Skill/Rules cho các coding agent
   --mcp-only         Chỉ cấu hình tệp .mcp.json
-  --skip-scaffold    Bỏ qua việc tạo thư mục tests/ và playwright.config.ts
+  --skip-scaffold    Bỏ qua việc tạo khung kiểm thử tests/
 
 Ví dụ:
-  npx qa-pilot init
-  npx qa-pilot init --dry-run
+  npx qa-pilot init --agent all
+  npx qa-pilot init --agent cursor,claude,copilot
+  npx qa-pilot init --list-agents
   npx -y qa-pilot server
 `);
   process.exit(0);
 }
-

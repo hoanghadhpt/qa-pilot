@@ -50,17 +50,20 @@
 Tại thư mục gốc dự án web của bạn, chạy:
 
 ```bash
-# Khởi tạo trọn gói Skill + MCP Server + Khung Playwright
+# Khởi tạo trọn gói Skill + MCP Server + Khung Playwright (Tự động nhận diện agent)
 npx qa-pilot init
+
+# Khởi tạo quy tắc cho tất cả 10 coding agent phổ biến hiện nay
+npx qa-pilot init --agent all
+
+# Khởi tạo cho các agent cụ thể (Cursor, Claude Code, GitHub Copilot, ...)
+npx qa-pilot init --agent cursor,claude,copilot
+
+# Xem danh sách 10 coding agent được hỗ trợ và trạng thái phát hiện
+npx qa-pilot init --list-agents
 
 # Xem trước thay đổi mà không ghi file (Dry run)
 npx qa-pilot init --dry-run
-
-# Chỉ cài đặt Skill tư duy QA (không cần trình duyệt)
-npx qa-pilot init --skill-only
-
-# Chỉ cấu hình .mcp.json
-npx qa-pilot init --mcp-only
 ```
 
 #### Cách 2: Chạy trực tiếp từ mã nguồn Repo
@@ -203,17 +206,20 @@ Khi kết nối với Antigravity IDE, Claude Code hoặc Cursor, bạn có th�
 Run directly at the root of your web project:
 
 ```bash
-# Full bootstrap: Skill + MCP Server config + Playwright scaffolding
+# Full bootstrap with smart auto-detection for installed coding agents
 npx qa-pilot init
+
+# Bootstrap rules and skills for all 10 common AI coding agents
+npx qa-pilot init --agent all
+
+# Bootstrap for specific coding assistants (Cursor, Claude Code, GitHub Copilot, etc.)
+npx qa-pilot init --agent cursor,claude,copilot
+
+# List all 10 supported coding agents and detection status
+npx qa-pilot init --list-agents
 
 # Preview changes without modifying files (Dry run)
 npx qa-pilot init --dry-run
-
-# Install only QA Skill & Heuristics (no browser engine)
-npx qa-pilot init --skill-only
-
-# Configure only .mcp.json
-npx qa-pilot init --mcp-only
 ```
 
 #### Option 2: Clone & Run from Repository Source

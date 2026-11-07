@@ -1,7 +1,7 @@
 {
   "name": "qa-pilot",
-  "version": "0.0.2",
-  "description": "Agentic AI Web Testing Platform for Antigravity, Claude Code & Cursor powered by Midscene and Playwright",
+  "version": "0.0.3",
+  "description": "Agentic AI Web Testing Platform for Antigravity, Cursor, Claude Code, Copilot & 10+ Coding Agents",
   "main": "dist/index.js",
   "type": "module",
   "files": [
@@ -18,7 +18,8 @@
     "build": "npm run copy-assets && tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
-    "test:cli": "node dist/cli/verify-cli.js && node dist/cli/verify-search.js",
+    "test:adapters": "node dist/cli/verify-adapters.js",
+    "test:cli": "node dist/cli/verify-cli.js && node dist/cli/verify-adapters.js && node dist/cli/verify-search.js",
     "test:server": "node dist/verify-suite-management.js && node dist/verify-auth-session.js",
     "test": "npm run test:cli && npm run test:server"
   },
