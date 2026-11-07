@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CliContract",
+  "description": "CLI interface specification for qa-pilot executable command",
+  "type": "object",
+  "commands": {
+    "init": {
+      "description": "Initialize qa-pilot Skill, MCP server config, and test scaffolding in target project",
+      "arguments": [
+        {
+          "name": "targetDir",
+          "type": "string",
+          "required": false,
+          "default": ".",
+          "description": "Directory to initialize"
+        }
+      ],
+      "options": {
+        "--dry-run": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preview files that would be created/updated without modifying disk"
+        },
+        "--force": {
+          "type": "boolean",
+          "default": false,
+          "description": "Overwrite existing skill or scaffold files without prompting"
+        },
+        "--skill-only": {
+          "type": "boolean",
+          "default": false,
+          "description": "Install only .agents/skills/qa-pilot/"
+        },
+        "--mcp-only": {
+          "type": "boolean",
+          "default": false,
+          "description": "Configure only .mcp.json"
+        },
+        "--skip-scaffold": {
+          "type": "boolean",
+          "default": false,
+          "description": "Skip creating tests/ directory and playwright.config.ts"
+        }
+      },
+      "exitCodes": {
+        "0": "Initialization succeeded",
+        "1": "Invalid arguments or target directory unreadable",
+        "2": "File permission error or write failure"
+      }
+    }
+  }
+}

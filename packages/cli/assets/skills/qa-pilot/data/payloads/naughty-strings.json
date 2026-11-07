@@ -1,0 +1,197 @@
+{
+  "version": "1.0.0",
+  "description": "Adversarial and boundary test payloads curated for Web UI and API validation testing",
+  "categories": {
+    "xss": {
+      "name": "Cross-Site Scripting (XSS)",
+      "description": "Chuỗi script inject kiểm tra khả năng escape HTML trên form và view",
+      "items": [
+        {
+          "id": "xss-script-tag",
+          "value": "<script>alert('XSS')</script>",
+          "risk": "high",
+          "purpose": "Kiểm tra thẻ script trực tiếp",
+          "expectedValidation": "Bị mã hóa HTML entity hoặc bị chặn bởi input sanitizer"
+        },
+        {
+          "id": "xss-img-onerror",
+          "value": "\"><img src=x onerror=alert(1)>",
+          "risk": "high",
+          "purpose": "Thoát khỏi thuộc tính thẻ HTML và kích hoạt event onerror",
+          "expectedValidation": "Escape dấu ngoặc kép và ngoặc nhọn"
+        },
+        {
+          "id": "xss-svg-onload",
+          "value": "<svg/onload=alert('SVG_XSS')>",
+          "risk": "high",
+          "purpose": "Payload XSS thông qua thẻ SVG hiện đại",
+          "expectedValidation": "Thẻ SVG không được thực thi mã JS"
+        },
+        {
+          "id": "xss-javascript-pseudo-protocol",
+          "value": "javascript:alert('LINK_XSS')",
+          "risk": "high",
+          "purpose": "Kiểm tra trường nhập URL/Website",
+          "expectedValidation": "Chỉ chấp nhận giao thức http:// hoặc https://"
+        }
+      ]
+    },
+    "sql_injection": {
+      "name": "SQL Injection & Authentication Bypass",
+      "description": "Chuỗi kiểm tra injection vào câu truy vấn database backend",
+      "items": [
+        {
+          "id": "sqli-or-true",
+          "value": "' OR '1'='1",
+          "risk": "high",
+          "purpose": "Bypass logic xác thực câu lệnh WHERE",
+          "expectedValidation": "Backend sử dụng parameterized queries, không chấp nhận ký tự nháy đơn"
+        },
+        {
+          "id": "sqli-comment-dash",
+          "value": "admin' --",
+          "risk": "high",
+          "purpose": "Cắt ngắn câu truy vấn bằng comment SQL",
+          "expectedValidation": "Không chấp nhận cú pháp comment"
+        },
+        {
+          "id": "sqli-union-select",
+          "value": "' UNION SELECT null, username, password FROM users --",
+          "risk": "high",
+          "purpose": "Kiểm tra trích xuất dữ liệu trái phép",
+          "expectedValidation": "Chặn hoặc báo lỗi cú pháp không an toàn"
+        }
+      ]
+    },
+    "unicode_vietnamese": {
+      "name": "Tiếng Việt & Ký tự có dấu phức tạp",
+      "description": "Kiểm tra hiển thị, mã hóa UTF-8 và tìm kiếm tiếng Việt",
+      "items": [
+        {
+          "id": "vn-tone-marks",
+          "value": "Nguyễn Thị Phương Thúy (Hà Nội, Việt Nam: ắ, ế, ỗ, ử, đ)",
+          "risk": "low",
+          "purpose": "Xác nhận hệ thống hỗ trợ đầy đủ thanh điệu tiếng Việt",
+          "expectedValidation": "Lưu và hiển thị chính xác, không biến thành ký tự ? hoặc lỗi font"
+        },
+        {
+          "id": "vn-combined-unicode",
+          "value": "Ha\u0300 N\u00f4\u0323i (Unicode tổ hợp vs dựng sẵn)",
+          "risk": "low",
+          "purpose": "Kiểm tra chuẩn hóa Unicode (NFC vs NFD)",
+          "expectedValidation": "Hệ thống chuẩn hóa và so khớp chính xác"
+        },
+        {
+          "id": "emoji-4byte-utf8",
+          "value": "Kiểm thử Emoji: 😀🎉🚀🔥 và cờ 🇻🇳",
+          "risk": "medium",
+          "purpose": "Kiểm tra database hỗ trợ bảng mã utf8mb4",
+          "expectedValidation": "Không gây lỗi crash 500 khi lưu vào database MySQL/Postgres"
+        }
+      ]
+    },
+    "boundary_lengths": {
+      "name": "Độ dài biên (BVA)",
+      "description": "Kiểm tra tràn bộ đệm, giới hạn độ dài trường text",
+      "items": [
+        {
+          "id": "bva-empty",
+          "value": "",
+          "risk": "low",
+          "purpose": "Kiểm tra bỏ trống trường bắt buộc",
+          "expectedValidation": "Báo lỗi yêu cầu nhập liệu màu đỏ"
+        },
+        {
+          "id": "bva-single-char",
+          "value": "A",
+          "risk": "low",
+          "purpose": "Kiểm tra độ dài tối thiểu (Min length)",
+          "expectedValidation": "Nếu trường yêu cầu >= 2 ký tự thì phải báo lỗi"
+        },
+        {
+          "id": "bva-255-chars",
+          "value": "LoremIpsumDolorSitAmetConsecteturAdipiscingElitSedDoEiusmodTemporIncididuntUtLaboreEtDoloreMagnaAliquaUtEnimAdMinimVeniamQuisNostrudExercitationUllamcoLaborisNisiUtAliquipExEaCommodoConsequatDuisAuteIrureDolorInReprehenderitInVoluptateVelitEsseCillumDoloreEuFugiatNullaPariatu",
+          "risk": "medium",
+          "purpose": "Kiểm tra giới hạn cột VARCHAR(255) tiêu chuẩn",
+          "expectedValidation": "Form cắt bớt (maxlength) hoặc hiển thị cảnh báo vượt quá số ký tự"
+        },
+        {
+          "id": "bva-1000-chars",
+          "value": "ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFieldsRepeatedToReachOneThousandChars_ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFieldsRepeatedToReachOneThousandChars_ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFieldsRepeatedToReachOneThousandChars_ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFieldsRepeatedToReachOneThousandChars_ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFieldsRepeatedToReachOneThousandChars_ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFieldsRepeatedToReachOneThousandChars_ThisIsAStringThatExceedsNormalInputSizeAndSimulatesExcessivePayloadTestingForBufferAndDOMOverflowAcrossStandardFields_End1000Chars",
+          "risk": "high",
+          "purpose": "Kiểm tra tấn công tràn chuỗi",
+          "expectedValidation": "Form chặn nhập hoặc từ chối với thông báo rõ ràng"
+        }
+      ]
+    },
+    "whitespace_special": {
+      "name": "Khoảng trắng & Ký tự tàng hình",
+      "description": "Kiểm tra làm sạch dữ liệu đầu vào (Trim & Sanitization)",
+      "items": [
+        {
+          "id": "ws-leading-trailing",
+          "value": "   admin@example.com   ",
+          "risk": "low",
+          "purpose": "Kiểm tra tự động trim khoảng trắng ở đầu và cuối",
+          "expectedValidation": "Tự động trim thành 'admin@example.com' trước khi gửi"
+        },
+        {
+          "id": "ws-only-spaces",
+          "value": "     ",
+          "risk": "low",
+          "purpose": "Kiểm tra trường chỉ toàn dấu cách",
+          "expectedValidation": "Xử lý tương đương trường rỗng và báo lỗi bắt buộc nhập"
+        },
+        {
+          "id": "ws-zero-width-space",
+          "value": "user\u200Bname",
+          "risk": "medium",
+          "purpose": "Kiểm tra ký tự tàng hình Zero-Width Space (U+200B)",
+          "expectedValidation": "Loại bỏ hoặc không cho phép làm giả username mạo danh"
+        },
+        {
+          "id": "ws-non-breaking-space",
+          "value": "first\u00A0last",
+          "risk": "low",
+          "purpose": "Ký tự Non-breaking space (&nbsp; / U+00A0)",
+          "expectedValidation": "Chuẩn hóa về dấu cách chuẩn thông thường"
+        }
+      ]
+    },
+    "format_validation": {
+      "name": "Định dạng Dữ liệu & Quy tắc định dạng",
+      "description": "Kiểm tra regex xác thực email, phone, number",
+      "items": [
+        {
+          "id": "fmt-email-missing-at",
+          "value": "user.example.com",
+          "risk": "low",
+          "purpose": "Email thiếu dấu @",
+          "expectedValidation": "Báo lỗi định dạng email không hợp lệ"
+        },
+        {
+          "id": "fmt-email-double-at",
+          "value": "user@@example.com",
+          "risk": "low",
+          "purpose": "Email chứa 2 dấu @",
+          "expectedValidation": "Báo lỗi định dạng email"
+        },
+        {
+          "id": "fmt-phone-alpha",
+          "value": "0912ABC456",
+          "risk": "low",
+          "purpose": "Số điện thoại chứa chữ cái",
+          "expectedValidation": "Báo lỗi chỉ được nhập chữ số"
+        },
+        {
+          "id": "fmt-number-negative",
+          "value": "-999",
+          "risk": "low",
+          "purpose": "Trường số lượng (quantity) nhập số âm",
+          "expectedValidation": "Báo lỗi số lượng phải lớn hơn hoặc bằng 0"
+        }
+      ]
+    }
+  }
+}
+

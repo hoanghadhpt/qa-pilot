@@ -3,11 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "description": "Agentic AI Web Testing Platform for Antigravity powered by MCP, Midscene.js and Playwright",
   "scripts": {
     "build:mcp": "npm --prefix packages/mcp-server run build",
+    "build:cli": "npm --prefix packages/cli run build",
     "dev:mcp": "npm --prefix packages/mcp-server run dev",
-    "build": "npm run build:mcp",
+    "build": "npm run build:mcp && npm run build:cli",
+    "test:cli": "node packages/cli/dist/verify-cli.js && node packages/cli/dist/verify-search.js",
     "dev": "npm run dev:mcp"
   },
   "devDependencies": {

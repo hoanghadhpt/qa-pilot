@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SkillMetadataContract",
+  "description": "Validation schema for SKILL.md YAML frontmatter and folder structure",
+  "type": "object",
+  "required": ["name", "description", "compatibility"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^qa-pilot$",
+      "description": "Identifier of the skill"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 20,
+      "description": "Clear functional summary of the skill capabilities and mindset"
+    },
+    "compatibility": {
+      "type": "string",
+      "description": "Requirements such as Antigravity IDE, Claude Code, or Node runtime"
+    }
+  },
+  "directoryStructure": {
+    "requiredFiles": [
+      "SKILL.md",
+      "scripts/search-heuristics.js",
+      "data/heuristics/sfdipot.md",
+      "data/payloads/naughty-strings.json",
+      "data/checklists/evaluation-checklist.md"
+    ]
+  }
+}
