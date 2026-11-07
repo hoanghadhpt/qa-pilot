@@ -1,6 +1,6 @@
 {
   "name": "qa-pilot",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Agentic AI Web Testing Platform for Antigravity, Cursor, Claude Code, Copilot & 10+ Coding Agents",
   "main": "dist/index.js",
   "type": "module",
