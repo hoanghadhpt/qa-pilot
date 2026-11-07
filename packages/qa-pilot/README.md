@@ -257,3 +257,4 @@ With Antigravity IDE, Claude Code, or Cursor connected:
 ## 📄 License
 
 Distributed under the **MIT License**.
+

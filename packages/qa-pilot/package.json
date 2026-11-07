@@ -1,6 +1,6 @@
 {
   "name": "qa-pilot",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Agentic AI Web Testing Platform for Antigravity, Claude Code & Cursor powered by Midscene and Playwright",
   "main": "dist/index.js",
   "type": "module",

@@ -37,7 +37,7 @@ if (isServer) {
   });
 } else {
   console.log(`
-QA Pilot (v0.0.1) - Agentic AI Web Testing Platform
+QA Pilot (v0.0.2) - Agentic AI Web Testing Platform
 
 Cách dùng:
   qa-pilot init [targetDir] [options]   Khởi tạo Skill, cấu hình .mcp.json và khung Playwright
