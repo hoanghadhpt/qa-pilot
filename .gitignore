@@ -8,6 +8,7 @@ build/
 *.log
 
 # Test Artifacts and Temporary Uploads (NEVER COMMIT)
+packages/qa-pilot/tests/
 **/tests/runs/**
 tests/runs/**
 **/tests/temp/**
