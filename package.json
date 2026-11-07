@@ -12,7 +12,7 @@
     "build": "npm --prefix packages/qa-pilot run build",
     "dev": "npm --prefix packages/qa-pilot run dev",
     "test": "npm --prefix packages/qa-pilot test",
-    "publish:npm": "npm --prefix packages/qa-pilot publish --access public"
+    "publish:npm": "cd packages/qa-pilot && npm publish --access public"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.0",
