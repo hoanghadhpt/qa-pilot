@@ -1,5 +1,5 @@
 {
-  "name": "qa-pilot",
+  "name": "qa-pilot-monorepo",
   "version": "0.0.1",
   "private": true,
   "license": "MIT",
@@ -14,6 +14,9 @@
     "dev:mcp": "npm --prefix packages/mcp-server run dev",
     "build": "npm run build:mcp && npm run build:cli",
     "test:cli": "node packages/cli/dist/verify-cli.js && node packages/cli/dist/verify-search.js",
+    "publish:mcp": "npm --prefix packages/mcp-server publish --access public",
+    "publish:cli": "npm --prefix packages/cli publish --access public",
+    "publish:all": "npm run publish:mcp && npm run publish:cli",
     "dev": "npm run dev:mcp"
   },
   "devDependencies": {
