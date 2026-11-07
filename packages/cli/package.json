@@ -1,6 +1,6 @@
 {
   "name": "qa-pilot",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "CLI and Distribution toolkit for QA Pilot Agentic Testing Platform",
   "type": "module",
   "bin": {
