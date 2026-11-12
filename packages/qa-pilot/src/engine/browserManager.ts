@@ -38,13 +38,24 @@ export class BrowserManager {
           headless: this.isHeadless,
           args: launchArgs
         });
-      } catch {
-        // Fallback: try system installed Google Chrome
-        this.browser = await chromium.launch({
-          headless: this.isHeadless,
-          channel: 'chrome',
-          args: launchArgs
-        });
+      } catch (chromiumErr: any) {
+        try {
+          // Fallback: try system installed Google Chrome
+          this.browser = await chromium.launch({
+            headless: this.isHeadless,
+            channel: 'chrome',
+            args: launchArgs
+          });
+        } catch (chromeErr: any) {
+          throw new Error(
+            `[QA Pilot] Không thể khởi chạy trình duyệt Chromium hoặc Google Chrome.\n` +
+            `Chi tiết: ${chromiumErr?.message || chromiumErr}\n` +
+            `👉 Hướng dẫn khắc phục:\n` +
+            `   Vui lòng chạy lệnh sau để tải trình duyệt Chromium cho Playwright:\n` +
+            `   npx playwright install chromium\n` +
+            `   Hoặc cài đặt Google Chrome trên máy của bạn.`
+          );
+        }
       }
     }
 

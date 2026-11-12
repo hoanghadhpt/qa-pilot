@@ -66,6 +66,12 @@ npx qa-pilot init --list-agents
 npx qa-pilot init --dry-run
 ```
 
+> [!NOTE]
+> **Yêu cầu trình duyệt (Browser Prerequisite):** QA Pilot tự động ưu tiên sử dụng trình duyệt Google Chrome có sẵn trên máy của bạn hoặc Chromium của Playwright. Nếu máy mới hoàn toàn chưa có trình duyệt tương thích, hãy chạy:
+> ```bash
+> npx playwright install chromium
+> ```
+
 #### Cách 2: Chạy trực tiếp từ mã nguồn Repo
 
 ```bash
@@ -221,6 +227,12 @@ npx qa-pilot init --list-agents
 # Preview changes without modifying files (Dry run)
 npx qa-pilot init --dry-run
 ```
+
+> [!NOTE]
+> **Browser Prerequisite:** QA Pilot automatically detects and uses your local Google Chrome installation or Playwright's Chromium. If running on a fresh machine/CI without any installed browser, run:
+> ```bash
+> npx playwright install chromium
+> ```
 
 #### Option 2: Clone & Run from Repository Source
 
